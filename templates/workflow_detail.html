@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-3">
+  <div class="col">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'workflows_list' %}">Workflows</a></li>
+        <li class="breadcrumb-item active">{{ workflow.name }}</li>
+      </ol>
+    </nav>
+    <h2><i class="bi bi-diagram-3"></i> {{ workflow.name }}</h2>
+  </div>
+  <div class="col-auto">
+    <form method="post" class="d-inline">
+      {% csrf_token %}
+      <button type="submit" name="toggle_active" class="btn btn-{% if workflow.active %}warning{% else %}success{% endif %}">
+        <i class="bi bi-power"></i> {% if workflow.active %}Desactivar{% else %}Activar{% endif %}
+      </button>
+    </form>
+    <a href="/admin/whatsapp/workflow/{{ workflow.id }}/change/" class="btn btn-primary">
+      <i class="bi bi-pencil"></i> Editar
+    </a>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-info-circle"></i> Configuración</h5>
+      </div>
+      <div class="card-body">
+        <table class="table table-sm">
+          <tr>
+            <th>Disparador:</th>
+            <td><span class="badge bg-info">{{ workflow.get_trigger_display }}</span></td>
+          </tr>
+          <tr>
+            <th>Condición:</th>
+            <td>{{ workflow.condition|default:"Ninguna" }}</td>
+          </tr>
+          <tr>
+            <th>Acción:</th>
+            <td>{{ workflow.action }}</td>
+          </tr>
+          <tr>
+            <th>Plantilla:</th>
+            <td>
+              {% if workflow.template %}
+              <a href="/admin/whatsapp/template/{{ workflow.template.id }}/change/">{{ workflow.template.name }}</a>
+              {% else %}
+              N/A
+              {% endif %}
+            </td>
+          </tr>
+          <tr>
+            <th>Delay:</th>
+            <td>
+              {% if workflow.delay_minutes > 0 %}
+              {{ workflow.delay_minutes }} minutos
+              {% else %}
+              Inmediato
+              {% endif %}
+            </td>
+          </tr>
+          <tr>
+            <th>Estado:</th>
+            <td>
+              {% if workflow.active %}
+              <span class="badge bg-success">Activo</span>
+              {% else %}
+              <span class="badge bg-secondary">Inactivo</span>
+              {% endif %}
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-diagram-2"></i> Flujo</h5>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-light">
+          <ol class="mb-0">
+            <li><strong>Evento:</strong> {{ workflow.get_trigger_display }}</li>
+            {% if workflow.condition %}
+            <li><strong>Si contiene:</strong> "{{ workflow.condition }}"</li>
+            {% endif %}
+            {% if workflow.delay_minutes > 0 %}
+            <li><strong>Esperar:</strong> {{ workflow.delay_minutes }} minutos</li>
+            {% endif %}
+            <li><strong>Ejecutar:</strong> {{ workflow.action }}</li>
+            {% if workflow.template %}
+            <li><strong>Enviar plantilla:</strong> {{ workflow.template.name }}</li>
+            {% endif %}
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-3">
+  <div class="col">
+    <h2><i class="bi bi-diagram-3"></i> Workflows y Automatizaciones</h2>
+    <p class="text-muted">Automatiza acciones basadas en eventos</p>
+  </div>
+  <div class="col-auto">
+    <a href="/admin/whatsapp/workflow/add/" class="btn btn-success">
+      <i class="bi bi-plus-circle"></i> Nuevo Workflow
+    </a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    {% if workflows %}
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Disparador</th>
+            <th>Acción</th>
+            <th>Delay</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for workflow in workflows %}
+          <tr>
+            <td><strong>{{ workflow.name }}</strong></td>
+            <td><span class="badge bg-info">{{ workflow.get_trigger_display }}</span></td>
+            <td>
+              {{ workflow.action }}
+              {% if workflow.template %}
+              <br><small class="text-muted">Plantilla: {{ workflow.template.name }}</small>
+              {% endif %}
+            </td>
+            <td>
+              {% if workflow.delay_minutes > 0 %}
+              <i class="bi bi-clock"></i> {{ workflow.delay_minutes }} min
+              {% else %}
+              Inmediato
+              {% endif %}
+            </td>
+            <td>
+              {% if workflow.active %}
+              <span class="badge bg-success">Activo</span>
+              {% else %}
+              <span class="badge bg-secondary">Inactivo</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{% url 'workflow_detail' workflow.id %}" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-eye"></i> Ver
+              </a>
+              <a href="/admin/whatsapp/workflow/{{ workflow.id }}/change/" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-pencil"></i>
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+      <i class="bi bi-info-circle"></i> No hay workflows configurados.
+      <a href="/admin/whatsapp/workflow/add/" class="alert-link">Crea tu primer workflow</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

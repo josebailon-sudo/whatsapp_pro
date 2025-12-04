@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block title %}Paso 3: WhatsApp - Asistente{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="mb-4">
+        <div class="progress" style="height: 30px;">
+            <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" role="progressbar" style="width: 60%;">
+                Paso 3 de 5
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <div class="card shadow-lg">
+                <div class="card-header bg-info text-white">
+                    <h3 class="mb-0"><i class="bi bi-whatsapp"></i> Paso 3: Conectar WhatsApp</h3>
+                </div>
+                <div class="card-body p-4">
+                    
+                    <!-- Estado de Conexión -->
+                    <div id="connectionStatus" class="mb-4">
+                        {% if is_connected %}
+                        <div class="alert alert-success">
+                            <h5><i class="bi bi-check-circle-fill"></i> ✅ WhatsApp Conectado y Listo!</h5>
+                            <p class="mb-0">Tu WhatsApp está conectado. Los mensajes se enviarán desde tu cuenta.</p>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-warning">
+                            <h5><i class="bi bi-exclamation-triangle-fill"></i> WhatsApp No Conectado</h5>
+                            <p class="mb-0">Escanea el código QR con tu WhatsApp para conectar.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <form method="post" id="connectionForm">
+                        {% csrf_token %}
+                        
+                        <div class="row g-4 mb-4">
+                            <!-- WhatsApp Real -->
+                            <div class="col-md-6">
+                                <div class="card h-100 {% if not is_connected %}border-warning{% else %}border-success{% endif %}">
+                                    <div class="card-body text-center">
+                                        <input type="radio" class="btn-check" name="connection_method" id="whatsapp_real" value="whatsapp_real" 
+                                               {% if current_method == 'whatsapp_real' or not current_method %}checked{% endif %}>
+                                        <label class="w-100" for="whatsapp_real">
+                                            <i class="bi bi-whatsapp {% if is_connected %}text-success{% else %}text-warning{% endif %}" style="font-size: 4rem;"></i>
+                                            <h5 class="mt-3">WhatsApp Real</h5>
+                                            <p class="text-muted">Envía mensajes reales<br>desde tu WhatsApp</p>
+                                            {% if is_connected %}
+                                            <span class="badge bg-success">✅ Conectado</span>
+                                            {% else %}
+                                            <span class="badge bg-warning">⚠️ Requiere conexión</span>
+                                            {% endif %}
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Modo Simulado -->
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <input type="radio" class="btn-check" name="connection_method" id="simulated" value="simulated"
+                                               {% if current_method == 'simulated' %}checked{% endif %}>
+                                        <label class="w-100" for="simulated">
+                                            <i class="bi bi-laptop text-primary" style="font-size: 4rem;"></i>
+                                            <h5 class="mt-3">Modo Simulado</h5>
+                                            <p class="text-muted">Para pruebas sin enviar<br>(Recomendado para testear)</p>
+                                            <span class="badge bg-primary">Siempre disponible</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Panel QR Code (solo si WhatsApp Real y NO conectado) -->
+                        <div id="qrPanel" style="display: {% if not is_connected %}block{% else %}none{% endif %};">
+                            <div class="card bg-light">
+                                <div class="card-header bg-dark text-white">
+                                    <h5 class="mb-0"><i class="bi bi-qr-code"></i> Escanear Código QR</h5>
+                                </div>
+                                <div class="card-body text-center p-4">
+                                    <div id="qrCodeContainer" class="mb-3">
+                                        <p class="text-muted">Cargando código QR...</p>
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Cargando...</span>
+                                        </div>
+                                    </div>
+                                    <div class="alert alert-info">
+                                        <strong>📱 Cómo conectar:</strong>
+                                        <ol class="mb-0 text-start mt-2">
+                                            <li>Abre WhatsApp en tu teléfono</li>
+                                            <li>Ve a <strong>Configuración → Dispositivos vinculados</strong></li>
+                                            <li>Toca en <strong>"Vincular un dispositivo"</strong></li>
+                                            <li>Escanea este código QR</li>
+                                        </ol>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-primary" onclick="refreshQR()">
+                                        <i class="bi bi-arrow-clockwise"></i> Refrescar QR
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'wizard_step2' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Volver: Mensaje
+                            </a>
+                            <button type="submit" class="btn btn-success btn-lg" id="btnContinue">
+                                Continuar <i class="bi bi-arrow-right"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let checkInterval;
+let isConnected = {{ is_connected|yesno:"true,false" }};
+
+// Cargar QR al inicio si no está conectado
+document.addEventListener('DOMContentLoaded', function() {
+    if (!isConnected) {
+        loadQRCode();
+        startConnectionCheck();
+    }
+    
+    // Mostrar/ocultar panel QR según selección
+    document.querySelectorAll('input[name="connection_method"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'whatsapp_real' && !isConnected) {
+                document.getElementById('qrPanel').style.display = 'block';
+                loadQRCode();
+                startConnectionCheck();
+            } else {
+                document.getElementById('qrPanel').style.display = 'none';
+                stopConnectionCheck();
+            }
+        });
+    });
+});
+
+function loadQRCode() {
+    // Primero verificar el estado
+    fetch('/whatsapp/status/')
+        .then(res => res.json())
+        .then(data => {
+            if (data.connected && data.status === 'ready') {
+                // Está conectado
+                location.reload();
+            } else if (data.qr) {
+                // Tiene QR en el status
+                document.getElementById('qrCodeContainer').innerHTML = 
+                    '<img src="' + data.qr + '" alt="QR Code" style="max-width: 300px;" class="img-fluid border p-2 bg-white">';
+            } else {
+                // Intentar obtener QR directamente del servicio
+                fetch('http://localhost:3000/qr')
+                    .then(res => res.json())
+                    .then(qrData => {
+                        if (qrData.qr) {
+                            document.getElementById('qrCodeContainer').innerHTML = 
+                                '<img src="' + qrData.qr + '" alt="QR Code" style="max-width: 300px;" class="img-fluid border p-2 bg-white">';
+                        } else {
+                            // Esperando QR
+                            document.getElementById('qrCodeContainer').innerHTML = 
+                                '<p class="text-muted">Generando código QR...</p>' +
+                                '<div class="spinner-border text-primary" role="status"></div>';
+                            setTimeout(loadQRCode, 2000);
+                        }
+                    })
+                    .catch(err => {
+                        document.getElementById('qrCodeContainer').innerHTML = 
+                            '<div class="alert alert-danger">❌ Error: Servicio WhatsApp no disponible<br>' +
+                            '<small>Asegúrate de que el servicio esté corriendo en puerto 3000</small></div>';
+                    });
+            }
+        })
+        .catch(err => {
+            // Si falla Django, intentar directo al servicio
+            fetch('http://localhost:3000/qr')
+                .then(res => res.json())
+                .then(qrData => {
+                    if (qrData.qr) {
+                        document.getElementById('qrCodeContainer').innerHTML = 
+                            '<img src="' + qrData.qr + '" alt="QR Code" style="max-width: 300px;" class="img-fluid border p-2 bg-white">';
+                    } else {
+                        setTimeout(loadQRCode, 2000);
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('qrCodeContainer').innerHTML = 
+                        '<div class="alert alert-danger">❌ Error de conexión<br>' +
+                        '<small>Verifica que el servicio WhatsApp esté corriendo</small></div>';
+                });
+        });
+}
+
+function refreshQR() {
+    document.getElementById('qrCodeContainer').innerHTML = 
+        '<p class="text-muted">Refrescando...</p>' +
+        '<div class="spinner-border text-primary" role="status"></div>';
+    loadQRCode();
+}
+
+function startConnectionCheck() {
+    checkInterval = setInterval(function() {
+        fetch('/whatsapp/status/')
+            .then(res => res.json())
+            .then(data => {
+                if (data.connected && data.status === 'ready') {
+                    clearInterval(checkInterval);
+                    location.reload(); // Recargar para mostrar estado conectado
+                }
+            });
+    }, 3000); // Verificar cada 3 segundos
+}
+
+function stopConnectionCheck() {
+    if (checkInterval) {
+        clearInterval(checkInterval);
+    }
+}
+
+// Validar antes de enviar
+document.getElementById('connectionForm').addEventListener('submit', function(e) {
+    const method = document.querySelector('input[name="connection_method"]:checked').value;
+    if (method === 'whatsapp_real' && !isConnected) {
+        e.preventDefault();
+        alert('⚠️ Debes conectar WhatsApp primero escaneando el código QR');
+        return false;
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Mapear Columnas - WhatsApp Pro{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-table"></i> Mapear Columnas del Archivo
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Información del archivo -->
+                    <div class="alert alert-info mb-4">
+                        <h5><i class="bi bi-file-earmark-text"></i> {{ filename }}</h5>
+                        <p class="mb-0"><strong>Total de filas:</strong> {{ total_rows }}</p>
+                    </div>
+
+                    <!-- Vista previa de datos -->
+                    <div class="mb-4">
+                        <h5><i class="bi bi-eye"></i> Vista Previa (primeras 5 filas)</h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered table-striped">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>#</th>
+                                        {% for col in columns %}
+                                        <th>{{ col }}</th>
+                                        {% endfor %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in preview_data %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        {% for col in columns %}
+                                        <td>{{ row|get_item:col|default:"-" }}</td>
+                                        {% endfor %}
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Formulario de mapeo -->
+                    <form method="post" action="{% url 'contacts_import' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="import_type" value="file">
+                        <input type="hidden" name="column_mapping" value="true">
+                        
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5><i class="bi bi-arrow-left-right"></i> Mapear Columnas a Campos</h5>
+                                <p class="text-muted">Seleccione qué columna del archivo corresponde a cada campo del contacto. Los campos marcados con <span class="text-danger">*</span> son obligatorios.</p>
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            <!-- Nombre (obligatorio) -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">
+                                    <i class="bi bi-person-badge text-danger"></i> Nombre <span class="text-danger">*</span>
+                                </label>
+                                <select name="name_column" class="form-select form-select-lg" required>
+                                    <option value="">-- Seleccione columna --</option>
+                                    {% for col in columns %}
+                                    <option value="{{ col }}" {% if 'nombre' in col|lower or 'name' in col|lower %}selected{% endif %}>{{ col }}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">Columna que contiene el nombre completo</small>
+                            </div>
+
+                            <!-- Teléfono (obligatorio) -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">
+                                    <i class="bi bi-phone text-danger"></i> Teléfono <span class="text-danger">*</span>
+                                </label>
+                                <select name="phone_column" class="form-select form-select-lg" required>
+                                    <option value="">-- Seleccione columna --</option>
+                                    {% for col in columns %}
+                                    <option value="{{ col }}" {% if 'telefono' in col|lower or 'celular' in col|lower or 'phone' in col|lower or 'movil' in col|lower %}selected{% endif %}>{{ col }}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">Columna que contiene el número de teléfono</small>
+                            </div>
+
+                            <!-- Email (opcional) -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">
+                                    <i class="bi bi-envelope text-primary"></i> Email (opcional)
+                                </label>
+                                <select name="email_column" class="form-select">
+                                    <option value="">-- Ignorar --</option>
+                                    {% for col in columns %}
+                                    <option value="{{ col }}" {% if 'email' in col|lower or 'correo' in col|lower or 'mail' in col|lower %}selected{% endif %}>{{ col }}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">Columna que contiene el email</small>
+                            </div>
+
+                            <!-- Grupo (opcional) -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">
+                                    <i class="bi bi-collection text-success"></i> Grupo (opcional)
+                                </label>
+                                <select name="group_column" class="form-select">
+                                    <option value="">-- Ignorar --</option>
+                                    {% for col in columns %}
+                                    <option value="{{ col }}" {% if 'grupo' in col|lower or 'group' in col|lower or 'categoria' in col|lower %}selected{% endif %}>{{ col }}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">Columna que contiene el grupo o categoría</small>
+                            </div>
+
+                            <!-- Campo Personalizado 1 -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">
+                                    <i class="bi bi-tag text-info"></i> Campo Personalizado 1 (opcional)
+                                </label>
+                                <select name="custom_field1_column" class="form-select">
+                                    <option value="">-- Ignorar --</option>
+                                    {% for col in columns %}
+                                    <option value="{{ col }}" {% if 'nota' in col|lower or 'note' in col|lower or 'observacion' in col|lower or 'comentario' in col|lower %}selected{% endif %}>{{ col }}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">Ej: Notas, observaciones, comentarios</small>
+                            </div>
+
+                            <!-- Campo Personalizado 2 -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">
+                                    <i class="bi bi-tag text-warning"></i> Campo Personalizado 2 (opcional)
+                                </label>
+                                <select name="custom_field2_column" class="form-select">
+                                    <option value="">-- Ignorar --</option>
+                                    {% for col in columns %}
+                                    <option value="{{ col }}" {% if 'valor' in col|lower or 'pago' in col|lower or 'monto' in col|lower or 'amount' in col|lower or 'payment' in col|lower %}selected{% endif %}>{{ col }}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">Ej: Valor a pagar, monto, deuda, etc.</small>
+                            </div>
+                        </div>
+
+                        <!-- Información adicional -->
+                        <div class="alert alert-warning mt-4">
+                            <i class="bi bi-info-circle"></i> <strong>Nota:</strong> Los campos personalizados se guardarán en el campo "Notas" del contacto en el formato: <code>Campo: Valor | Campo: Valor</code>
+                        </div>
+
+                        <!-- Botones -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'contacts_import' %}" class="btn btn-secondary btn-lg">
+                                <i class="bi bi-arrow-left"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-success btn-lg px-5">
+                                <i class="bi bi-cloud-upload"></i> Importar {{ total_rows }} Contactos
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Resaltar columnas seleccionadas en la vista previa
+document.querySelectorAll('select[name$="_column"]').forEach(select => {
+    select.addEventListener('change', function() {
+        // Remover resaltado previo
+        document.querySelectorAll('th, td').forEach(cell => {
+            cell.classList.remove('table-primary', 'table-success', 'table-warning', 'table-info');
+        });
+        
+        // Aplicar nuevos resaltados
+        const nameCol = document.querySelector('select[name="name_column"]').value;
+        const phoneCol = document.querySelector('select[name="phone_column"]').value;
+        const emailCol = document.querySelector('select[name="email_column"]').value;
+        const groupCol = document.querySelector('select[name="group_column"]').value;
+        
+        highlightColumn(nameCol, 'table-primary');
+        highlightColumn(phoneCol, 'table-success');
+        highlightColumn(emailCol, 'table-warning');
+        highlightColumn(groupCol, 'table-info');
+    });
+});
+
+function highlightColumn(colName, cssClass) {
+    if (!colName) return;
+    
+    const headers = document.querySelectorAll('thead th');
+    let colIndex = -1;
+    
+    headers.forEach((th, idx) => {
+        if (th.textContent.trim() === colName) {
+            colIndex = idx;
+            th.classList.add(cssClass);
+        }
+    });
+    
+    if (colIndex !== -1) {
+        document.querySelectorAll(`tbody tr td:nth-child(${colIndex + 1})`).forEach(td => {
+            td.classList.add(cssClass);
+        });
+    }
+}
+
+// Inicializar resaltado
+window.addEventListener('load', function() {
+    document.querySelector('select[name="name_column"]').dispatchEvent(new Event('change'));
+});
+</script>
+{% endblock %}

@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-3">
+  <div class="col">
+    <h2><i class="bi bi-graph-up"></i> Analíticas y Reportes</h2>
+    <p class="text-muted">Estadísticas y métricas del sistema</p>
+  </div>
+</div>
+
+<div class="row mb-4">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="bi bi-activity"></i> Actividad Reciente (7 días)</h5>
+      </div>
+      <div class="card-body">
+        <div class="row text-center">
+          <div class="col-6">
+            <h3>{{ recent_campaigns }}</h3>
+            <p class="text-muted mb-0">Campañas Creadas</p>
+          </div>
+          <div class="col-6">
+            <h3>{{ recent_messages }}</h3>
+            <p class="text-muted mb-0">Mensajes Enviados</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header bg-info text-white">
+        <h5 class="mb-0"><i class="bi bi-envelope"></i> Mensajes por Estado</h5>
+      </div>
+      <div class="card-body">
+        {% if messages_by_status %}
+        <ul class="list-group list-group-flush">
+          {% for item in messages_by_status %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <span class="text-capitalize">{{ item.status }}</span>
+            <span class="badge bg-primary rounded-pill">{{ item.count }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-muted mb-0">No hay datos disponibles</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mb-4">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header bg-success text-white">
+        <h5 class="mb-0"><i class="bi bi-people"></i> Contactos por Grupo (Top 10)</h5>
+      </div>
+      <div class="card-body">
+        {% if contacts_by_group %}
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Grupo</th>
+                <th class="text-end">Contactos</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in contacts_by_group %}
+              <tr>
+                <td>{{ item.group }}</td>
+                <td class="text-end"><strong>{{ item.count }}</strong></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">No hay datos disponibles</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header bg-warning text-dark">
+        <h5 class="mb-0"><i class="bi bi-tags"></i> Etiquetas Más Usadas (Top 10)</h5>
+      </div>
+      <div class="card-body">
+        {% if tags_usage %}
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Etiqueta</th>
+                <th class="text-end">Contactos</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for tag in tags_usage %}
+              <tr>
+                <td>
+                  <span class="badge" style="background-color: {{ tag.color }};">{{ tag.name }}</span>
+                </td>
+                <td class="text-end"><strong>{{ tag.contact_count }}</strong></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">No hay datos disponibles</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header bg-secondary text-white">
+    <h5 class="mb-0"><i class="bi bi-megaphone"></i> Rendimiento de Campañas (Últimas 10)</h5>
+  </div>
+  <div class="card-body">
+    {% if campaigns_stats %}
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Campaña</th>
+            <th class="text-center">Total</th>
+            <th class="text-center">Enviados</th>
+            <th class="text-center">Fallidos</th>
+            <th class="text-center">Tasa Éxito</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for campaign in campaigns_stats %}
+          <tr>
+            <td><strong>{{ campaign.name }}</strong></td>
+            <td class="text-center">{{ campaign.total_contacts }}</td>
+            <td class="text-center"><span class="badge bg-success">{{ campaign.sent_count }}</span></td>
+            <td class="text-center"><span class="badge bg-danger">{{ campaign.failed_count }}</span></td>
+            <td class="text-center">
+              {% widthratio campaign.sent_count campaign.total_contacts 100 %}%
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-muted mb-0">No hay campañas disponibles</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row mt-4">
+  <div class="col-12">
+    <div class="alert alert-info">
+      <i class="bi bi-info-circle"></i> <strong>Nota:</strong> Para exportar datos o generar reportes personalizados, 
+      usa el <a href="/admin/" class="alert-link">Panel de Administración</a> o las 
+      <a href="/api/" class="alert-link">APIs REST</a>.
+    </div>
+  </div>
+</div>
+{% endblock %}

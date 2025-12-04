@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ campaign.name }} - WhatsApp Pro{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <a href="{% url 'whatsapp:campaign_list' %}" class="text-decoration-none text-muted">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        {{ campaign.name }}
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        {% if campaign.status == 'draft' or campaign.status == 'scheduled' %}
+            <button class="btn btn-success me-2" onclick="enqueueCampaign({{ campaign.pk }})">
+                <i class="bi bi-send"></i> Encolar Mensajes
+            </button>
+        {% endif %}
+        <a href="/admin/whatsapp/campaign/{{ campaign.pk }}/change/" class="btn btn-outline-primary">
+            <i class="bi bi-pencil"></i> Editar
+        </a>
+    </div>
+</div>
+
+<!-- Campaign Info -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> Información de la Campaña</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-3">Estado:</dt>
+                    <dd class="col-sm-9">
+                        <span class="badge bg-{{ campaign.status }} fs-6">{{ campaign.get_status_display }}</span>
+                    </dd>
+
+                    <dt class="col-sm-3">Plantilla:</dt>
+                    <dd class="col-sm-9">{{ campaign.template.name }}</dd>
+
+                    <dt class="col-sm-3">Enviar a:</dt>
+                    <dd class="col-sm-9">
+                        {% if campaign.send_to_all %}
+                            Todos los contactos con opt-in activo
+                        {% else %}
+                            Contactos con tags: <strong>{{ campaign.filter_tags }}</strong>
+                        {% endif %}
+                    </dd>
+
+                    <dt class="col-sm-3">Creada:</dt>
+                    <dd class="col-sm-9">{{ campaign.created_at|date:"d/m/Y H:i" }}</dd>
+
+                    {% if campaign.scheduled_at %}
+                        <dt class="col-sm-3">Programada:</dt>
+                        <dd class="col-sm-9">{{ campaign.scheduled_at|date:"d/m/Y H:i" }}</dd>
+                    {% endif %}
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-graph-up"></i> Estadísticas</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <h3 class="text-primary">{{ stats.total }}</h3>
+                        <small class="text-muted">Total</small>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <h3 class="text-warning">{{ stats.pending }}</h3>
+                        <small class="text-muted">Pendientes</small>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <h3 class="text-info">{{ stats.sent }}</h3>
+                        <small class="text-muted">Enviados</small>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <h3 class="text-success">{{ stats.delivered }}</h3>
+                        <small class="text-muted">Entregados</small>
+                    </div>
+                    <div class="col-6">
+                        <h3 class="text-secondary">{{ stats.read }}</h3>
+                        <small class="text-muted">Leídos</small>
+                    </div>
+                    <div class="col-6">
+                        <h3 class="text-danger">{{ stats.failed }}</h3>
+                        <small class="text-muted">Fallidos</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Messages List -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-envelope"></i> Mensajes (mostrando primeros 100)</h5>
+    </div>
+    <div class="card-body">
+        {% if messages %}
+            <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                    <thead>
+                        <tr>
+                            <th>Contacto</th>
+                            <th>Teléfono</th>
+                            <th>Contenido</th>
+                            <th>Estado</th>
+                            <th>Enviado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for message in messages %}
+                            <tr>
+                                <td>{{ message.contact.name }}</td>
+                                <td><small>{{ message.contact.phone_number }}</small></td>
+                                <td>
+                                    <small class="text-truncate d-inline-block" style="max-width: 300px;">
+                                        {{ message.content }}
+                                    </small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ message.status }} status-badge">
+                                        {{ message.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if message.sent_at %}
+                                        <small class="text-muted">{{ message.sent_at|date:"d/m/Y H:i" }}</small>
+                                    {% else %}
+                                        <small class="text-muted">-</small>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted text-center py-4">
+                No hay mensajes encolados para esta campaña.
+                {% if campaign.status == 'draft' %}
+                    <br>Haz click en "Encolar Mensajes" para generar los mensajes.
+                {% endif %}
+            </p>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function enqueueCampaign(campaignId) {
+    if (!confirm('¿Encolar mensajes para esta campaña?')) {
+        return;
+    }
+    
+    fetch(`/api/campaigns/${campaignId}/enqueue/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`✓ ${data.messages_created} mensaje(s) encolados de ${data.total_contacts} contacto(s)`);
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Error desconocido'));
+        }
+    })
+    .catch(error => {
+        alert('Error al encolar campaña: ' + error);
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

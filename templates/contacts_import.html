@@ -1,0 +1,321 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="bg-white p-4 rounded shadow-sm">
+  <div class="mb-4">
+    <h3><i class="bi bi-upload"></i> Importar Contactos</h3>
+    <p class="text-muted">Importa contactos desde múltiples fuentes</p>
+  </div>
+
+  <!-- Métodos de importación -->
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <ul class="nav nav-tabs" id="importTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="file-tab" data-bs-toggle="tab" data-bs-target="#file" type="button">
+            <i class="bi bi-file-earmark-spreadsheet"></i> Archivo CSV/Excel
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="text-tab" data-bs-toggle="tab" data-bs-target="#text" type="button">
+            <i class="bi bi-list-ul"></i> Lista de Números
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="whatsapp-tab" data-bs-toggle="tab" data-bs-target="#whatsapp" type="button">
+            <i class="bi bi-whatsapp"></i> WhatsApp
+          </button>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="tab-content" id="importTabsContent">
+    
+    <!-- TAB 1: Archivo CSV/Excel -->
+    <div class="tab-pane fade show active" id="file" role="tabpanel">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="import_type" value="file">
+        
+        <div class="mb-4">
+          <h5>Importar desde archivo CSV o Excel</h5>
+          <p class="text-muted mb-2">
+            <strong>📋 Formato MÁS SIMPLE:</strong> Solo pon tus datos en 2 columnas:
+          </p>
+          <ul class="text-muted mb-0">
+            <li><strong>Columna 1:</strong> Nombres de las personas</li>
+            <li><strong>Columna 2:</strong> Números de teléfono/celular</li>
+          </ul>
+          <p class="text-muted mt-2">
+            <small>✅ <strong>No importa cómo llames las columnas</strong> - El sistema usa automáticamente la 1ra columna como nombre y la 2da como teléfono.</small>
+          </p>
+        </div>
+
+        <div class="mb-3">
+          <label for="file" class="form-label">Seleccionar archivo</label>
+          <input type="file" class="form-control" id="file" name="file" 
+                 accept=".csv,.xlsx,.xls" required>
+          <small class="text-muted">Formatos soportados: CSV, XLSX, XLS</small>
+        </div>
+
+        <div class="alert alert-info">
+          <strong><i class="bi bi-info-circle"></i> Ejemplos de formatos aceptados:</strong>
+          
+          <div class="row mt-3">
+            <div class="col-md-6">
+              <strong>Opción 1 - Con encabezados (recomendado):</strong>
+              <pre class="mb-0 mt-1">Nombre,Celular
+Juan Pérez,987654321
+María López,0987654322</pre>
+            </div>
+            
+            <div class="col-md-6">
+              <strong>Opción 2 - Sin encabezados:</strong>
+              <pre class="mb-0 mt-1">Juan Pérez,987654321
+María López,0987654322
+Pedro García,+593987654323</pre>
+            </div>
+          </div>
+          
+          <div class="mt-3">
+            <strong>Opción 3 - Con más columnas (email, grupo):</strong>
+            <pre class="mb-0 mt-1">Nombre,Celular,Email,Grupo
+Juan Pérez,987654321,juan@mail.com,VIP
+María López,0987654322,maria@mail.com,Clientes</pre>
+          </div>
+          
+          <p class="mt-3 mb-0">
+            <i class="bi bi-check-circle text-success"></i> 
+            <strong>El sistema detecta automáticamente:</strong> nombres, teléfonos, emails y grupos en cualquier orden
+          </p>
+        </div>
+
+        <div class="d-grid gap-2">
+          <button type="submit" class="btn btn-primary btn-lg">
+            <i class="bi bi-upload"></i> Importar Contactos desde Archivo
+          </button>
+        </div>
+        
+        <div id="uploadProgress" class="mt-3" style="display: none;">
+          <div class="alert alert-info">
+            <i class="bi bi-hourglass-split"></i> Procesando archivo, por favor espere...
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- TAB 2: Lista de números -->
+    <div class="tab-pane fade" id="text" role="tabpanel">
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="import_type" value="text">
+        
+        <div class="mb-4">
+          <h5>Importar desde lista de números</h5>
+          <p class="text-muted">
+            Pegue una lista de números de teléfono. Puede usar el formato:
+            <code>Nombre|Teléfono</code> o solo <code>Teléfono</code>
+          </p>
+        </div>
+
+        <div class="mb-3">
+          <label for="text_input" class="form-label">Lista de contactos</label>
+          <textarea class="form-control" id="text_input" name="text_input" 
+                    rows="10" placeholder="Ejemplo:
+Juan Pérez|+593987654321
+María López|0987654322
++593981234567
+0981234568" required></textarea>
+          <small class="text-muted">Un contacto por línea</small>
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="default_group" class="form-label">Grupo por defecto</label>
+            <input type="text" class="form-control" id="default_group" name="default_group" 
+                   value="Importados" list="groupsList">
+            <datalist id="groupsList">
+              {% for g in groups %}
+                <option value="{{ g }}">
+              {% endfor %}
+            </datalist>
+          </div>
+        </div>
+
+        <div class="alert alert-info">
+          <strong><i class="bi bi-info-circle"></i> Formatos aceptados:</strong>
+          <ul class="mb-0">
+            <li><code>Nombre|+593987654321</code> - Con nombre y teléfono</li>
+            <li><code>+593987654321</code> - Solo teléfono (se usa como nombre)</li>
+            <li><code>0987654321</code> - Sin código de país (se agrega +593)</li>
+          </ul>
+        </div>
+
+        <div class="d-grid gap-2">
+          <button type="submit" class="btn btn-primary btn-lg">
+            <i class="bi bi-upload"></i> Importar Lista de Contactos
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- TAB 3: WhatsApp -->
+    <div class="tab-pane fade" id="whatsapp" role="tabpanel">
+      <div class="mb-4">
+        <h5>Importar desde WhatsApp</h5>
+        <p class="text-muted">
+          Importa contactos directamente desde grupos o listas de WhatsApp
+        </p>
+      </div>
+
+      <!-- Grupos de WhatsApp -->
+      <div class="card mb-3">
+        <div class="card-header">
+          <i class="bi bi-people"></i> Desde Grupos de WhatsApp
+        </div>
+        <div class="card-body">
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="import_type" value="whatsapp_group">
+            
+            <p class="text-muted">
+              Importa todos los miembros de un grupo de WhatsApp.
+              Requiere integración con proveedor (Twilio/360dialog).
+            </p>
+
+            <div class="mb-3">
+              <label for="group_id" class="form-label">ID del Grupo</label>
+              <input type="text" class="form-control" id="group_id" name="group_id" 
+                     placeholder="Ej: 123456789@g.us">
+            </div>
+
+            <button type="submit" class="btn btn-outline-success" disabled>
+              <i class="bi bi-download"></i> Importar Grupo
+              <span class="badge bg-warning text-dark ms-2">Próximamente</span>
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Contactos de WhatsApp -->
+      <div class="card mb-3">
+        <div class="card-header">
+          <i class="bi bi-person-lines-fill"></i> Desde Contactos de WhatsApp
+        </div>
+        <div class="card-body">
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="import_type" value="whatsapp_contacts">
+            
+            <p class="text-muted">
+              Importa contactos desde tu lista de WhatsApp Business.
+              Requiere integración con proveedor (Twilio/360dialog).
+            </p>
+
+            <div class="form-check mb-3">
+              <input type="checkbox" class="form-check-input" id="only_optins" name="only_optins" checked>
+              <label class="form-check-label" for="only_optins">
+                Solo importar contactos con Opt-In confirmado
+              </label>
+            </div>
+
+            <button type="submit" class="btn btn-outline-success" disabled>
+              <i class="bi bi-download"></i> Importar Contactos
+              <span class="badge bg-warning text-dark ms-2">Próximamente</span>
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle"></i>
+        <strong>Funcionalidad en desarrollo:</strong>
+        La importación desde WhatsApp requiere configurar un proveedor (Twilio, 360dialog, etc.).
+        Esta funcionalidad estará disponible una vez se complete la integración del proveedor.
+      </div>
+    </div>
+  </div>
+
+  <hr class="my-4">
+
+  <div class="d-flex justify-content-between">
+    <a href="{% url 'contacts_list' %}" class="btn btn-secondary">
+      <i class="bi bi-arrow-left"></i> Volver a Contactos
+    </a>
+    <div>
+      <a href="/admin/whatsapp/contact/add/" class="btn btn-outline-primary" target="_blank">
+        <i class="bi bi-person-plus"></i> Agregar Uno a Uno (Admin)
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+// Auto-limpiar números al pegar
+document.getElementById('text_input')?.addEventListener('paste', function(e) {
+  setTimeout(() => {
+    let text = this.value;
+    // Limpiar espacios extras y líneas vacías
+    text = text.split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0)
+      .join('\n');
+    this.value = text;
+  }, 10);
+});
+
+// Mostrar indicador de carga al subir archivo
+document.querySelectorAll('form').forEach(form => {
+  form.addEventListener('submit', function(e) {
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const importType = this.querySelector('input[name="import_type"]')?.value;
+    
+    if (importType === 'file') {
+      const fileInput = this.querySelector('input[type="file"]');
+      if (!fileInput || !fileInput.files.length) {
+        e.preventDefault();
+        alert('Por favor seleccione un archivo');
+        return;
+      }
+      
+      // Mostrar indicador de progreso
+      const progressDiv = document.getElementById('uploadProgress');
+      if (progressDiv) {
+        progressDiv.style.display = 'block';
+      }
+    }
+    
+    // Deshabilitar botón para evitar doble submit
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Procesando...';
+    }
+  });
+});
+
+// Vista previa del archivo seleccionado
+document.getElementById('file')?.addEventListener('change', function(e) {
+  const file = this.files[0];
+  if (file) {
+    const fileName = file.name;
+    const fileSize = (file.size / 1024).toFixed(2) + ' KB';
+    const fileType = file.type || fileName.split('.').pop().toUpperCase();
+    
+    // Crear elemento de vista previa si no existe
+    let previewDiv = document.getElementById('filePreview');
+    if (!previewDiv) {
+      previewDiv = document.createElement('div');
+      previewDiv.id = 'filePreview';
+      previewDiv.className = 'alert alert-success mt-3';
+      this.parentElement.appendChild(previewDiv);
+    }
+    
+    previewDiv.innerHTML = `
+      <i class="bi bi-file-earmark-check"></i>
+      <strong>Archivo seleccionado:</strong> ${fileName} (${fileSize})
+      <br><small>Tipo: ${fileType}</small>
+    `;
+  }
+});
+</script>
+{% endblock %}

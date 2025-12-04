@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}Paso 4: Configuración - Asistente{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="mb-4">
+        <div class="progress" style="height: 30px;">
+            <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" role="progressbar" style="width: 80%;">
+                Paso 4 de 5
+            </div>
+        </div>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="row">
+            <!-- Configuración -->
+            <div class="col-lg-7">
+                <div class="card shadow-lg mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h3 class="mb-0"><i class="bi bi-gear-fill"></i> Paso 4: Configurar Envío</h3>
+                    </div>
+                    <div class="card-body p-4">
+                        <h5 class="mb-3">⚙️ Velocidad y Pausas</h5>
+                        
+                        <div class="mb-4">
+                            <label for="send_speed" class="form-label fw-bold">
+                                Velocidad de Envío (mensajes por minuto):
+                            </label>
+                            <input type="range" class="form-range" name="send_speed" id="send_speed" 
+                                   min="1" max="60" value="10" oninput="updateSpeedDisplay()">
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">Lento (1/min)</small>
+                                <strong id="speedDisplay">10 mensajes/minuto</strong>
+                                <small class="text-muted">Rápido (60/min)</small>
+                            </div>
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle"></i> 
+                                <span id="delayInfo">1 mensaje cada 6 segundos</span>
+                            </small>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="batch_size" class="form-label fw-bold">
+                                Tamaño de Bloque:
+                            </label>
+                            <input type="number" class="form-control" name="batch_size" id="batch_size" 
+                                   value="50" min="10" max="500" step="10">
+                            <small class="text-muted">Cuántos mensajes enviar antes de hacer una pausa</small>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="delay_between_batches" class="form-label fw-bold">
+                                Pausa entre Bloques (segundos):
+                            </label>
+                            <input type="number" class="form-control" name="delay_between_batches" id="delay_between_batches" 
+                                   value="60" min="10" max="600" step="10">
+                            <small class="text-muted">Tiempo de espera después de cada bloque</small>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <h6><i class="bi bi-lightbulb-fill"></i> Recomendaciones:</h6>
+                            <ul class="mb-0 small">
+                                <li><strong>10 msg/min</strong>: Seguro y natural</li>
+                                <li><strong>Bloques de 50</strong>: Balance ideal</li>
+                                <li><strong>60 seg pausa</strong>: Evita bloqueos</li>
+                            </ul>
+                        </div>
+
+                        <hr>
+
+                        <h5 class="mb-3">👥 Seleccionar Destinatarios</h5>
+                        
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="recipient_filter" 
+                                   id="filter_all" value="all" checked onchange="toggleFilters()">
+                            <label class="form-check-label" for="filter_all">
+                                <strong>Todos los contactos</strong> ({{ total_contacts }})
+                            </label>
+                        </div>
+
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="recipient_filter" 
+                                   id="filter_groups" value="groups" onchange="toggleFilters()">
+                            <label class="form-check-label" for="filter_groups">
+                                <strong>Por grupos</strong>
+                            </label>
+                        </div>
+                        
+                        <div id="groups_selection" class="ms-4 mb-3" style="display: none;">
+                            {% for group in groups %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="groups" 
+                                       value="{{ group }}" id="group_{{ forloop.counter }}">
+                                <label class="form-check-label" for="group_{{ forloop.counter }}">
+                                    {{ group }}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview Final -->
+            <div class="col-lg-5">
+                <div class="position-sticky" style="top: 20px;">
+                    <div class="card shadow-sm mb-3">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="bi bi-eye-fill"></i> Vista Previa Final</h5>
+                        </div>
+                        <div class="card-body" style="background: #e5ddd5; min-height: 300px;">
+                            <div class="d-flex justify-content-end mb-3">
+                                <div class="card shadow-sm" style="max-width: 85%; background-color: #dcf8c6; border-radius: 7.5px;">
+                                    <div class="card-body py-2 px-3">
+                                        <div style="white-space: pre-wrap; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #303030;">{{ preview_message }}</div>
+                                        <div class="text-end mt-1">
+                                            <small class="text-muted" style="font-size: 11px;">
+                                                <i class="bi bi-clock"></i> {{ "now"|date:"H:i" }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% if sample_contact %}
+                            <div class="alert alert-info py-2 px-3">
+                                <small>
+                                    <strong>Ejemplo:</strong><br>
+                                    {{ sample_contact.name }}
+                                </small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-secondary text-white">
+                            <h6 class="mb-0">Resumen</h6>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Contactos:</strong> {{ total_contacts }}</p>
+                            <p><strong>Método:</strong> Simulado</p>
+                            <p><strong>Estado:</strong> <span class="badge bg-success">Listo</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navegación -->
+        <div class="row mt-4">
+            <div class="col">
+                <a href="{% url 'wizard_step3' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Volver: WhatsApp
+                </a>
+            </div>
+            <div class="col text-end">
+                <button type="submit" class="btn btn-danger btn-lg px-5">
+                    <i class="bi bi-rocket-takeoff-fill"></i> Crear Campaña y Continuar
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+function updateSpeedDisplay() {
+    const speed = document.getElementById('send_speed').value;
+    document.getElementById('speedDisplay').textContent = speed + ' mensajes/minuto';
+    const delay = (60 / speed).toFixed(1);
+    document.getElementById('delayInfo').textContent = '1 mensaje cada ' + delay + ' segundos';
+}
+
+function toggleFilters() {
+    const filterType = document.querySelector('input[name="recipient_filter"]:checked').value;
+    document.getElementById('groups_selection').style.display = 
+        filterType === 'groups' ? 'block' : 'none';
+}
+
+updateSpeedDisplay();
+</script>
+{% endblock %}

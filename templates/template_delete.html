@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Eliminar Plantilla - WhatsApp Pro{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Confirmar Eliminación</h4>
+                </div>
+                <div class="card-body">
+                    <p class="lead">¿Estás seguro de que deseas eliminar la siguiente plantilla?</p>
+                    
+                    <div class="alert alert-warning">
+                        <h5><i class="bi bi-file-text"></i> {{ template.name }}</h5>
+                        <p><strong>Categoría:</strong> {{ template.category }}</p>
+                        <p><strong>Estado:</strong> {% if template.active %}<span class="badge bg-success">Activa</span>{% else %}<span class="badge bg-secondary">Inactiva</span>{% endif %}</p>
+                        <hr>
+                        <div class="bg-light p-2 rounded" style="max-height: 200px; overflow-y: auto;">
+                            <pre style="white-space: pre-wrap; margin: 0;">{{ template.content }}</pre>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-circle"></i> <strong>Advertencia:</strong> Esta acción no se puede deshacer.
+                    </div>
+                    
+                    <form method="post" class="d-flex justify-content-between">
+                        {% csrf_token %}
+                        <a href="{% url 'templates_list' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> Sí, Eliminar Plantilla
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

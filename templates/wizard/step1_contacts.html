@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Paso 1: Contactos - Asistente{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Progress Bar -->
+    <div class="mb-4">
+        <div class="progress" style="height: 30px;">
+            <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" role="progressbar" style="width: 20%;">
+                Paso 1 de 5
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="bi bi-people-fill"></i> Paso 1: Contactos
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+                    {% if has_contacts %}
+                    <div class="alert alert-success">
+                        <h4><i class="bi bi-check-circle-fill"></i> ¡Excelente!</h4>
+                        <p class="mb-0">Tienes <strong>{{ stats.total }}</strong> contactos listos para enviar mensajes.</p>
+                    </div>
+
+                    <h5 class="mt-4 mb-3">📊 Resumen por Grupos:</h5>
+                    <div class="row g-3 mb-4">
+                        {% for group, count in stats.by_group.items %}
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body py-2">
+                                    <strong>{{ group }}</strong>
+                                    <span class="badge bg-primary float-end">{{ count }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <h5 class="mb-3">👥 Primeros Contactos:</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Teléfono</th>
+                                    <th>Grupo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for contact in contacts %}
+                                <tr>
+                                    <td><i class="bi bi-person-fill text-primary"></i> {{ contact.name }}</td>
+                                    <td>{{ contact.phone }}</td>
+                                    <td><span class="badge bg-secondary">{{ contact.group }}</span></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {% if stats.total > 20 %}
+                    <p class="text-muted text-center">
+                        <small>Mostrando 20 de {{ stats.total }} contactos. 
+                        <a href="{% url 'contacts_list' %}">Ver todos</a></small>
+                    </p>
+                    {% endif %}
+
+                    {% else %}
+                    <div class="alert alert-warning">
+                        <h4><i class="bi bi-exclamation-triangle-fill"></i> No hay contactos</h4>
+                        <p>Necesitas importar contactos antes de continuar.</p>
+                    </div>
+
+                    <div class="d-grid gap-3">
+                        <a href="{% url 'contacts_import' %}" class="btn btn-primary btn-lg">
+                            <i class="bi bi-file-earmark-arrow-up"></i> Importar Contactos desde CSV/Excel
+                        </a>
+                        <a href="{% url 'contact_create' %}" class="btn btn-outline-primary btn-lg">
+                            <i class="bi bi-person-plus"></i> Agregar Contacto Manual
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel Lateral de Ayuda -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-3">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-lightbulb-fill"></i> Ayuda</h5>
+                </div>
+                <div class="card-body">
+                    <h6>¿Qué necesito?</h6>
+                    <ul class="small">
+                        <li>Lista de contactos con nombre y teléfono</li>
+                        <li>Opcionalmente: grupos, emails, campos personalizados</li>
+                        <li>Archivo CSV o Excel (XLS/XLSX)</li>
+                    </ul>
+
+                    <h6 class="mt-3">Formato recomendado:</h6>
+                    <pre class="bg-light p-2 small">nombre,telefono,grupo
+Juan Pérez,+593987654321,VIP
+María López,+593912345678,General</pre>
+
+                    <div class="alert alert-info py-2 px-3 small mt-3">
+                        <i class="bi bi-info-circle-fill"></i> 
+                        Los números se limpian automáticamente
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progreso del Wizard -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h6 class="mb-0">Tu Progreso</h6>
+                </div>
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item bg-success text-white">
+                        <i class="bi bi-check-circle-fill"></i> 1. Contactos (aquí)
+                    </div>
+                    <div class="list-group-item text-muted">
+                        <i class="bi bi-circle"></i> 2. Mensaje
+                    </div>
+                    <div class="list-group-item text-muted">
+                        <i class="bi bi-circle"></i> 3. WhatsApp
+                    </div>
+                    <div class="list-group-item text-muted">
+                        <i class="bi bi-circle"></i> 4. Configuración
+                    </div>
+                    <div class="list-group-item text-muted">
+                        <i class="bi bi-circle"></i> 5. Lanzar
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navegación -->
+    <div class="row mt-4">
+        <div class="col">
+            <a href="{% url 'wizard_welcome' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Volver a Bienvenida
+            </a>
+        </div>
+        <div class="col text-end">
+            {% if has_contacts %}
+            <a href="{% url 'wizard_step2' %}" class="btn btn-success btn-lg">
+                Siguiente: Mensaje <i class="bi bi-arrow-right"></i>
+            </a>
+            {% else %}
+            <button class="btn btn-secondary btn-lg" disabled>
+                Siguiente: Mensaje <i class="bi bi-arrow-right"></i>
+            </button>
+            <p class="text-muted small mt-2">Importa contactos para continuar</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

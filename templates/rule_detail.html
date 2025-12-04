@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-3">
+  <div class="col">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'rules_list' %}">Reglas</a></li>
+        <li class="breadcrumb-item active">{{ rule.name }}</li>
+      </ol>
+    </nav>
+    <h2><i class="bi bi-robot"></i> {{ rule.name }}</h2>
+  </div>
+  <div class="col-auto">
+    <form method="post" class="d-inline">
+      {% csrf_token %}
+      <button type="submit" name="toggle_active" class="btn btn-{% if rule.active %}warning{% else %}success{% endif %}">
+        <i class="bi bi-power"></i> {% if rule.active %}Desactivar{% else %}Activar{% endif %}
+      </button>
+    </form>
+    <a href="/admin/whatsapp/rule/{{ rule.id }}/change/" class="btn btn-primary">
+      <i class="bi bi-pencil"></i> Editar
+    </a>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6">
+    <div class="card mb-3">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-info-circle"></i> Información</h5>
+      </div>
+      <div class="card-body">
+        <table class="table table-sm">
+          <tr>
+            <th>Prioridad:</th>
+            <td><span class="badge bg-dark">{{ rule.priority }}</span></td>
+          </tr>
+          <tr>
+            <th>Estado:</th>
+            <td>
+              {% if rule.active %}
+              <span class="badge bg-success">Activa</span>
+              {% else %}
+              <span class="badge bg-secondary">Inactiva</span>
+              {% endif %}
+            </td>
+          </tr>
+          <tr>
+            <th>Horario:</th>
+            <td>{{ rule.schedule_start|time:"H:i" }} - {{ rule.schedule_end|time:"H:i" }}</td>
+          </tr>
+          <tr>
+            <th>Creada:</th>
+            <td>{{ rule.created_at|date:"d/m/Y H:i" }}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card mb-3">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-list-check"></i> Condiciones</h5>
+      </div>
+      <div class="card-body">
+        {% if rule.conditions %}
+        <ul class="list-group">
+          {% for cond in rule.conditions %}
+          <li class="list-group-item">
+            <strong>{{ cond.type }}:</strong> "{{ cond.value }}"
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-muted">Sin condiciones</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h5 class="mb-0"><i class="bi bi-chat-quote"></i> Respuesta Automática</h5>
+  </div>
+  <div class="card-body">
+    <div class="alert alert-light">
+      <pre class="mb-0" style="white-space: pre-wrap;">{{ rule.response }}</pre>
+    </div>
+  </div>
+</div>
+{% endblock %}

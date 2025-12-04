@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="bg-white p-4 rounded shadow-sm">
+  <div class="text-center mb-4">
+    <i class="bi bi-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
+    <h3 class="mt-3">Confirmar Eliminación</h3>
+    <p class="text-muted">¿Está seguro de eliminar este contacto?</p>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <h5 class="card-title">{{ contact.name }}</h5>
+      <p class="mb-1"><i class="bi bi-phone"></i> {{ contact.phone }}</p>
+      {% if contact.email %}
+        <p class="mb-1"><i class="bi bi-envelope"></i> {{ contact.email }}</p>
+      {% endif %}
+      <p class="mb-1"><i class="bi bi-tag"></i> Grupo: <span class="badge bg-info">{{ contact.group }}</span></p>
+      <p class="mb-0">
+        Estado: 
+        {% if contact.opt_in %}
+          <span class="badge bg-success">Opt-In</span>
+        {% else %}
+          <span class="badge bg-danger">Opt-Out</span>
+        {% endif %}
+      </p>
+    </div>
+  </div>
+
+  <div class="alert alert-warning">
+    <i class="bi bi-exclamation-circle"></i>
+    <strong>Advertencia:</strong> Esta acción no se puede deshacer. 
+    Se eliminarán todos los datos asociados a este contacto.
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="d-flex justify-content-between">
+      <a href="{% url 'contacts_list' %}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Cancelar
+      </a>
+      <button type="submit" class="btn btn-danger">
+        <i class="bi bi-trash"></i> Eliminar Contacto
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="bi bi-megaphone"></i> Campañas de Mensajería</h2>
+                <a href="{% url 'campaign_create' %}" class="btn btn-success btn-lg">
+                    <i class="bi bi-plus-circle"></i> Nueva Campaña
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Plantilla</th>
+                            <th>Contactos</th>
+                            <th>Enviados</th>
+                            <th>Fallidos</th>
+                            <th>Programada para</th>
+                            <th>Creada</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for camp in campaigns %}
+                        <tr>
+                            <td><strong>{{ camp.name }}</strong></td>
+                            <td>
+                                <span class="badge bg-primary">{{ camp.template.name }}</span>
+                            </td>
+                            <td><span class="badge bg-info">{{ camp.total_contacts }}</span></td>
+                            <td><span class="badge bg-success">{{ camp.sent_count }}</span></td>
+                            <td><span class="badge bg-danger">{{ camp.failed_count }}</span></td>
+                            <td>
+                                {% if camp.scheduled_for %}
+                                <i class="bi bi-clock"></i> {{ camp.scheduled_for|date:"d/m/Y H:i" }}
+                                {% else %}
+                                <span class="text-muted">Inmediato</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ camp.created_at|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                <a href="{% url 'campaign_detail' camp.pk %}" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-eye"></i> Ver
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center">
+                                <div class="alert alert-info mb-0">
+                                    <i class="bi bi-info-circle"></i> No hay campañas creadas. 
+                                    <a href="{% url 'campaign_create' %}" class="alert-link">Crear primera campaña</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

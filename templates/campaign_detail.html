@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2><i class="bi bi-megaphone"></i> {{ campaign.name }}</h2>
+                    <p class="text-muted mb-0">
+                        Creada el {{ campaign.created_at|date:"d/m/Y H:i" }} por {{ campaign.created_by }}
+                    </p>
+                </div>
+                <a href="{% url 'campaigns_list' %}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Volver
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h3 class="text-primary">{{ campaign.total_contacts }}</h3>
+                    <p class="text-muted mb-0">Total Contactos</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h3 class="text-success">{{ campaign.sent_count }}</h3>
+                    <p class="text-muted mb-0">Enviados</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h3 class="text-danger">{{ campaign.failed_count }}</h3>
+                    <p class="text-muted mb-0">Fallidos</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h3 class="text-info">{{ campaign.success_rate|floatformat:1 }}%</h3>
+                    <p class="text-muted mb-0">Tasa de Éxito</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información de la campaña -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-file-text"></i> Plantilla de Mensaje</h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="text-muted">{{ campaign.template.name }}</h6>
+                    <div class="bg-light p-3 rounded">
+                        <pre style="white-space: pre-wrap; margin: 0;">{{ campaign.template.content }}</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-send"></i> Acciones</h5>
+                </div>
+                <div class="card-body">
+                    {% if campaign.scheduled_for %}
+                    <div class="alert alert-warning">
+                        <i class="bi bi-clock"></i> <strong>Programada para:</strong><br>
+                        {{ campaign.scheduled_for|date:"d/m/Y H:i" }}
+                    </div>
+                    {% endif %}
+                    
+                    <form method="post" action="{% url 'campaign_send' campaign.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success w-100 btn-lg mb-2">
+                            <i class="bi bi-send"></i> Encolar Mensajes
+                        </button>
+                    </form>
+                    
+                    <p class="text-muted small mb-0">
+                        <i class="bi bi-info-circle"></i> Los mensajes se agregarán a la cola y el worker los procesará automáticamente.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de mensajes -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0"><i class="bi bi-list-task"></i> Mensajes de la Campaña</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Contacto</th>
+                            <th>Teléfono</th>
+                            <th>Estado</th>
+                            <th>Intentos</th>
+                            <th>Creado</th>
+                            <th>Enviado</th>
+                            <th>Error</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for m in campaign.messages.all|slice:":50" %}
+                        <tr>
+                            <td>{{ m.contact.name }}</td>
+                            <td>{{ m.contact.phone }}</td>
+                            <td>
+                                {% if m.status == 'sent' %}
+                                <span class="badge bg-success"><i class="bi bi-check-circle"></i> Enviado</span>
+                                {% elif m.status == 'pending' %}
+                                <span class="badge bg-warning"><i class="bi bi-clock"></i> Pendiente</span>
+                                {% elif m.status == 'sending' %}
+                                <span class="badge bg-info"><i class="bi bi-arrow-repeat"></i> Enviando</span>
+                                {% else %}
+                                <span class="badge bg-danger"><i class="bi bi-x-circle"></i> Fallido</span>
+                                {% endif %}
+                            </td>
+                            <td><span class="badge bg-secondary">{{ m.attempts }}</span></td>
+                            <td>{{ m.created_at|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                {% if m.sent_at %}
+                                {{ m.sent_at|date:"d/m/Y H:i" }}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if m.last_error %}
+                                <small class="text-danger">{{ m.last_error|truncatewords:10 }}</small>
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center">
+                                <div class="alert alert-info mb-0">
+                                    <i class="bi bi-info-circle"></i> No hay mensajes encolados aún. Haz clic en "Encolar Mensajes" para comenzar.
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            {% if campaign.messages.count > 50 %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i> Mostrando los primeros 50 mensajes de {{ campaign.messages.count }} totales.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

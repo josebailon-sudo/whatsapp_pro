@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}Activar Suscripción{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <div class="card shadow-lg mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h3 class="mb-0">
+                        <i class="bi bi-exclamation-triangle-fill"></i> 
+                        {% if subscription.status == 'trial' %}
+                            ¡Activa tu Cuenta!
+                        {% else %}
+                            ¡Renueva tu Suscripción!
+                        {% endif %}
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <!-- Mensaje según estado -->
+                    {% if subscription.status == 'trial' %}
+                        <div class="alert alert-warning">
+                            <h5>🎁 Tu período de prueba está por vencer</h5>
+                            <p>Te quedan <strong>{{ subscription.days_remaining }} días</strong> de prueba gratuita.</p>
+                            <p class="mb-0">Para continuar usando WhatsApp Pro, activa tu suscripción ahora.</p>
+                        </div>
+                    {% elif subscription.status == 'expired' %}
+                        <div class="alert alert-danger">
+                            <h5>⚠️ Tu suscripción ha vencido</h5>
+                            <p class="mb-0">Renueva tu suscripción para continuar enviando mensajes.</p>
+                        </div>
+                    {% endif %}
+
+                    <div class="row">
+                        <!-- Plan Inicial (3 meses) -->
+                        {% if not subscription.has_paid_initial %}
+                        <div class="col-md-12">
+                            <div class="card border-success mb-4">
+                                <div class="card-header bg-success text-white">
+                                    <h4 class="mb-0">Activación Inicial - 3 Meses</h4>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <h2 class="text-success">$45 USD</h2>
+                                            <p class="text-muted">90 días de acceso completo</p>
+                                            
+                                            <h6>✅ Incluye:</h6>
+                                            <ul>
+                                                <li>Envío ilimitado de mensajes</li>
+                                                <li>Contactos ilimitados</li>
+                                                <li>Campañas programadas</li>
+                                                <li>Importación de contactos (CSV/Excel)</li>
+                                                <li>Plantillas de mensajes</li>
+                                                <li>Soporte técnico</li>
+                                            </ul>
+
+                                            <p class="alert alert-info">
+                                                <i class="bi bi-info-circle"></i> 
+                                                <strong>Primer pago obligatorio:</strong> Para garantizar el servicio, 
+                                                la primera activación debe ser por 3 meses.
+                                            </p>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <form method="post">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="activate_initial">
+                                                
+                                                <div class="mb-3">
+                                                    <label class="form-label">Método de Pago</label>
+                                                    <select name="payment_method" class="form-select" required>
+                                                        <option value="">Seleccionar...</option>
+                                                        <option value="transfer">Transferencia Bancaria</option>
+                                                        <option value="paypal">PayPal</option>
+                                                        <option value="stripe">Tarjeta de Crédito</option>
+                                                        <option value="cash">Efectivo</option>
+                                                        <option value="other">Otro</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label class="form-label">ID de Transacción (opcional)</label>
+                                                    <input type="text" name="transaction_id" class="form-control" 
+                                                           placeholder="Ej: TRX123456">
+                                                    <small class="text-muted">Si ya realizaste el pago, ingresa el número de transacción</small>
+                                                </div>
+
+                                                <div class="d-grid">
+                                                    <button type="submit" class="btn btn-success btn-lg">
+                                                        <i class="bi bi-check-circle"></i> Activar 3 Meses ($45)
+                                                    </button>
+                                                </div>
+                                            </form>
+
+                                            <div class="mt-3 text-center">
+                                                <a href="{% url 'subscription_payment' %}" class="btn btn-link">
+                                                    Ver instrucciones de pago
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Plan Mensual (solo si ya pagó inicial) -->
+                        {% else %}
+                        <div class="col-md-12">
+                            <div class="card border-primary mb-4">
+                                <div class="card-header bg-primary text-white">
+                                    <h4 class="mb-0">Renovación Mensual</h4>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <h2 class="text-primary">$15 USD / mes</h2>
+                                            <p class="text-muted">30 días de acceso completo</p>
+                                            
+                                            <h6>✅ Incluye:</h6>
+                                            <ul>
+                                                <li>Todas las funciones de la plataforma</li>
+                                                <li>Sin límite de mensajes</li>
+                                                <li>Sin compromiso a largo plazo</li>
+                                                <li>Soporte técnico continuo</li>
+                                            </ul>
+
+                                            <p class="alert alert-success">
+                                                <i class="bi bi-check-circle"></i> 
+                                                Ya completaste la activación inicial. Ahora puedes renovar mes a mes.
+                                            </p>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <form method="post">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="activate_monthly">
+                                                
+                                                <div class="mb-3">
+                                                    <label class="form-label">Método de Pago</label>
+                                                    <select name="payment_method" class="form-select" required>
+                                                        <option value="">Seleccionar...</option>
+                                                        <option value="transfer">Transferencia Bancaria</option>
+                                                        <option value="paypal">PayPal</option>
+                                                        <option value="stripe">Tarjeta de Crédito</option>
+                                                        <option value="cash">Efectivo</option>
+                                                        <option value="other">Otro</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label class="form-label">ID de Transacción (opcional)</label>
+                                                    <input type="text" name="transaction_id" class="form-control" 
+                                                           placeholder="Ej: TRX123456">
+                                                </div>
+
+                                                <div class="d-grid">
+                                                    <button type="submit" class="btn btn-primary btn-lg">
+                                                        <i class="bi bi-arrow-clockwise"></i> Renovar 1 Mes ($15)
+                                                    </button>
+                                                </div>
+                                            </form>
+
+                                            <div class="mt-3 text-center">
+                                                <a href="{% url 'subscription_payment' %}" class="btn btn-link">
+                                                    Ver instrucciones de pago
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Proceso de Activación -->
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h5>📋 Proceso de Activación:</h5>
+                            <ol>
+                                <li>Realiza el pago según las <a href="{% url 'subscription_payment' %}">instrucciones de pago</a></li>
+                                <li>Completa el formulario anterior con tu método de pago</li>
+                                <li>Un administrador verificará tu pago en menos de 24 horas</li>
+                                <li>Recibirás confirmación y tu cuenta será activada automáticamente</li>
+                            </ol>
+                            
+                            <p class="alert alert-warning mb-0">
+                                <i class="bi bi-clock"></i> 
+                                <strong>Importante:</strong> Los pagos se verifican manualmente. 
+                                Si realizaste el pago, por favor espera hasta 24 horas para la activación.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mb-4">
+                <a href="{% url 'subscription_status' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Ver Estado de Suscripción
+                </a>
+                <a href="{% url 'index' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-house"></i> Volver al Inicio
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

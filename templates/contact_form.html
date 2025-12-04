@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="bg-white p-4 rounded shadow-sm">
+  <div class="mb-4">
+    <h3>
+      <i class="bi bi-{% if mode == 'create' %}person-plus{% else %}pencil{% endif %}"></i>
+      {% if mode == 'create' %}Crear Nuevo Contacto{% else %}Editar Contacto{% endif %}
+    </h3>
+    <p class="text-muted">Complete los datos del contacto</p>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+    
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="name" class="form-label">Nombre <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" id="name" name="name" 
+               value="{% if contact %}{{ contact.name }}{% endif %}" required>
+      </div>
+      
+      <div class="col-md-6 mb-3">
+        <label for="phone" class="form-label">Teléfono <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" id="phone" name="phone" 
+               value="{% if contact %}{{ contact.phone }}{% endif %}" 
+               placeholder="+593987654321" required>
+        <small class="text-muted">Formato: +593987654321 (incluir código de país)</small>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="email" class="form-label">Email</label>
+        <input type="email" class="form-control" id="email" name="email" 
+               value="{% if contact %}{{ contact.email }}{% endif %}" 
+               placeholder="contacto@ejemplo.com">
+      </div>
+      
+      <div class="col-md-6 mb-3">
+        <label for="group" class="form-label">Grupo</label>
+        <input type="text" class="form-control" id="group" name="group" 
+               value="{% if contact %}{{ contact.group }}{% else %}General{% endif %}" 
+               list="groupsList">
+        <datalist id="groupsList">
+          {% for g in groups %}
+            <option value="{{ g }}">
+          {% endfor %}
+        </datalist>
+        <small class="text-muted">Seleccione uno existente o escriba uno nuevo</small>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <div class="form-check">
+          <input type="checkbox" class="form-check-input" id="opt_in" name="opt_in" 
+                 {% if not contact or contact.opt_in %}checked{% endif %}>
+          <label class="form-check-label" for="opt_in">
+            Opt-In (puede recibir mensajes)
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Etiquetas</label>
+      <div class="row">
+        {% for tag in tags %}
+          <div class="col-md-3 mb-2">
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" id="tag_{{ tag.id }}" 
+                     name="tags" value="{{ tag.id }}"
+                     {% if tag.id in current_tag_ids %}checked{% endif %}>
+              <label class="form-check-label" for="tag_{{ tag.id }}">
+                <span class="badge bg-secondary">{{ tag.name }}</span>
+              </label>
+            </div>
+          </div>
+        {% empty %}
+          <div class="col-12">
+            <small class="text-muted">No hay etiquetas creadas. 
+              <a href="/admin/whatsapp/tag/add/" target="_blank">Crear etiqueta</a>
+            </small>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <hr>
+
+    <div class="d-flex justify-content-between">
+      <a href="{% url 'contacts_list' %}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Cancelar
+      </a>
+      <button type="submit" class="btn btn-primary">
+        <i class="bi bi-check-circle"></i> 
+        {% if mode == 'create' %}Crear Contacto{% else %}Guardar Cambios{% endif %}
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+// Validación del teléfono
+document.getElementById('phone').addEventListener('blur', function() {
+  let phone = this.value.trim();
+  if (phone && !phone.startsWith('+')) {
+    // Si no empieza con +, agregar +593 por defecto (Ecuador)
+    if (phone.startsWith('0')) {
+      phone = phone.substring(1);
+    }
+    this.value = '+593' + phone;
+  }
+});
+</script>
+{% endblock %}

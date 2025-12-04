@@ -1,0 +1,282 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Crear Campaña - WhatsApp Pro{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <h2><i class="bi bi-megaphone"></i> Crear Nueva Campaña</h2>
+            <p class="text-muted">Diseña y programa tu campaña de mensajería masiva</p>
+        </div>
+    </div>
+
+    <form method="post" id="campaignForm">
+        {% csrf_token %}
+        
+        <!-- Paso 1: Información Básica -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-1-circle"></i> Información de la Campaña</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Nombre de la Campaña <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control form-control-lg" placeholder="Ej: Promoción Black Friday 2025" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Plantilla de Mensaje <span class="text-danger">*</span></label>
+                        <select name="template_id" id="templateSelect" class="form-select form-select-lg" required>
+                            <option value="">-- Selecciona una plantilla --</option>
+                            {% for template in templates %}
+                            <option value="{{ template.id }}" data-content="{{ template.content }}">
+                                {{ template.name }} ({{ template.category }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted">
+                            {% if not templates %}
+                            <i class="bi bi-exclamation-triangle text-warning"></i> 
+                            No hay plantillas. <a href="{% url 'template_create' %}">Crear plantilla</a>
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+                
+                <!-- Vista previa de plantilla seleccionada -->
+                <div id="templatePreview" class="alert alert-info" style="display: none;">
+                    <strong><i class="bi bi-eye"></i> Vista Previa de la Plantilla:</strong>
+                    <pre id="templatePreviewContent" style="white-space: pre-wrap; margin-top: 10px;"></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Paso 2: Selección de Contactos -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-2-circle"></i> Destinatarios</h5>
+            </div>
+            <div class="card-body">
+                <!-- Tipo de filtro -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold">¿A quién enviar? <span class="text-danger">*</span></label>
+                    <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="filter_type" id="filterAll" value="all" checked>
+                        <label class="btn btn-outline-primary" for="filterAll">
+                            <i class="bi bi-people"></i> Todos los contactos<br>
+                            <small>({{ total_contacts }} contactos)</small>
+                        </label>
+
+                        <input type="radio" class="btn-check" name="filter_type" id="filterGroups" value="groups">
+                        <label class="btn btn-outline-primary" for="filterGroups">
+                            <i class="bi bi-collection"></i> Por grupos
+                        </label>
+
+                        <input type="radio" class="btn-check" name="filter_type" id="filterTags" value="tags">
+                        <label class="btn btn-outline-primary" for="filterTags">
+                            <i class="bi bi-tags"></i> Por etiquetas
+                        </label>
+
+                        <input type="radio" class="btn-check" name="filter_type" id="filterCustom" value="custom">
+                        <label class="btn btn-outline-primary" for="filterCustom">
+                            <i class="bi bi-person-check"></i> Selección manual
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Filtro por grupos -->
+                <div id="groupsFilter" class="filter-section" style="display: none;">
+                    <label class="form-label fw-bold">Selecciona Grupos</label>
+                    <div class="row">
+                        {% for group in groups %}
+                        <div class="col-md-4 mb-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="groups[]" value="{{ group }}" id="group{{ forloop.counter }}">
+                                <label class="form-check-label" for="group{{ forloop.counter }}">
+                                    {{ group }} <span class="badge bg-secondary">{{ contacts_by_group|get_item:group }}</span>
+                                </label>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Filtro por etiquetas -->
+                <div id="tagsFilter" class="filter-section" style="display: none;">
+                    <label class="form-label fw-bold">Selecciona Etiquetas</label>
+                    <div class="row">
+                        {% for tag in tags %}
+                        <div class="col-md-4 mb-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="tags[]" value="{{ tag.id }}" id="tag{{ tag.id }}">
+                                <label class="form-check-label" for="tag{{ tag.id }}">
+                                    <span class="badge" style="background-color: {{ tag.color }};">{{ tag.name }}</span>
+                                </label>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Selección manual -->
+                <div id="customFilter" class="filter-section" style="display: none;">
+                    <label class="form-label fw-bold">Selecciona Contactos</label>
+                    <input type="text" id="contactSearch" class="form-control mb-3" placeholder="Buscar contacto...">
+                    <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px;">
+                        {% for contact in contacts %}
+                        <div class="form-check contact-item" data-name="{{ contact.name|lower }}" data-phone="{{ contact.phone }}">
+                            <input class="form-check-input" type="checkbox" name="contacts[]" value="{{ contact.id }}" id="contact{{ contact.id }}">
+                            <label class="form-check-label" for="contact{{ contact.id }}">
+                                {{ contact.name }} - {{ contact.phone }}
+                                <small class="text-muted">({{ contact.group }})</small>
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Contador de destinatarios -->
+                <div class="alert alert-success mt-3">
+                    <strong><i class="bi bi-info-circle"></i> Destinatarios seleccionados:</strong> 
+                    <span id="recipientCount">{{ total_contacts }}</span> contactos
+                </div>
+            </div>
+        </div>
+
+        <!-- Paso 3: Programación -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="bi bi-3-circle"></i> Programación</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="radio" name="schedule_type" id="scheduleNow" value="now" checked>
+                            <label class="form-check-label fw-bold" for="scheduleNow">
+                                <i class="bi bi-send"></i> Enviar inmediatamente
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="schedule_type" id="scheduleScheduled" value="scheduled">
+                            <label class="form-check-label fw-bold" for="scheduleScheduled">
+                                <i class="bi bi-clock"></i> Programar envío
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-6" id="scheduledFields" style="display: none;">
+                        <div class="mb-2">
+                            <label class="form-label">Fecha</label>
+                            <input type="date" name="scheduled_date" class="form-control" min="{{ today }}">
+                        </div>
+                        <div>
+                            <label class="form-label">Hora</label>
+                            <input type="time" name="scheduled_time" class="form-control">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones de acción -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'campaigns_list' %}" class="btn btn-secondary btn-lg">
+                        <i class="bi bi-arrow-left"></i> Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-success btn-lg px-5">
+                        <i class="bi bi-check-circle"></i> Crear Campaña
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Vista previa de plantilla
+document.getElementById('templateSelect').addEventListener('change', function() {
+    const preview = document.getElementById('templatePreview');
+    const content = document.getElementById('templatePreviewContent');
+    const selected = this.options[this.selectedIndex];
+    
+    if (this.value) {
+        content.textContent = selected.dataset.content;
+        preview.style.display = 'block';
+    } else {
+        preview.style.display = 'none';
+    }
+});
+
+// Mostrar/ocultar filtros
+document.querySelectorAll('input[name="filter_type"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        document.querySelectorAll('.filter-section').forEach(section => {
+            section.style.display = 'none';
+        });
+        
+        if (this.value === 'groups') {
+            document.getElementById('groupsFilter').style.display = 'block';
+        } else if (this.value === 'tags') {
+            document.getElementById('tagsFilter').style.display = 'block';
+        } else if (this.value === 'custom') {
+            document.getElementById('customFilter').style.display = 'block';
+        }
+        
+        updateRecipientCount();
+    });
+});
+
+// Mostrar/ocultar campos de programación
+document.querySelectorAll('input[name="schedule_type"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        document.getElementById('scheduledFields').style.display = 
+            this.value === 'scheduled' ? 'block' : 'none';
+    });
+});
+
+// Búsqueda de contactos
+document.getElementById('contactSearch').addEventListener('input', function() {
+    const search = this.value.toLowerCase();
+    document.querySelectorAll('.contact-item').forEach(item => {
+        const name = item.dataset.name;
+        const phone = item.dataset.phone;
+        item.style.display = (name.includes(search) || phone.includes(search)) ? 'block' : 'none';
+    });
+});
+
+// Actualizar contador de destinatarios
+function updateRecipientCount() {
+    const filterType = document.querySelector('input[name="filter_type"]:checked').value;
+    let count = 0;
+    
+    if (filterType === 'all') {
+        count = {{ total_contacts }};
+    } else if (filterType === 'groups') {
+        const contactsByGroup = {{ contacts_by_group|safe }};
+        document.querySelectorAll('input[name="groups[]"]:checked').forEach(checkbox => {
+            count += contactsByGroup[checkbox.value] || 0;
+        });
+    } else if (filterType === 'custom') {
+        count = document.querySelectorAll('input[name="contacts[]"]:checked').length;
+    }
+    
+    document.getElementById('recipientCount').textContent = count;
+}
+
+// Listeners para actualizar contador
+document.querySelectorAll('input[name="groups[]"], input[name="contacts[]"]').forEach(checkbox => {
+    checkbox.addEventListener('change', updateRecipientCount);
+});
+
+// Establecer fecha mínima como hoy
+const today = new Date().toISOString().split('T')[0];
+document.querySelector('input[name="scheduled_date"]').min = today;
+</script>
+{% endblock %}

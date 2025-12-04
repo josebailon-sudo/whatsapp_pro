@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}Estado de Suscripción{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow-lg mb-4">
+                <div class="card-header {% if subscription.status == 'active' %}bg-success{% elif subscription.status == 'trial' %}bg-info{% else %}bg-danger{% endif %} text-white">
+                    <h3 class="mb-0">
+                        <i class="bi bi-shield-check"></i> Estado de tu Suscripción
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <!-- Estado Actual -->
+                    <div class="alert {% if subscription.status == 'active' %}alert-success{% elif subscription.status == 'trial' %}alert-info{% else %}alert-danger{% endif %}">
+                        <h4>
+                            Estado: 
+                            {% if subscription.status == 'trial' %}
+                                <span class="badge bg-info">🎁 Prueba Gratuita</span>
+                            {% elif subscription.status == 'active' %}
+                                <span class="badge bg-success">✅ Activa</span>
+                            {% elif subscription.status == 'expired' %}
+                                <span class="badge bg-danger">⚠️ Vencida</span>
+                            {% elif subscription.status == 'suspended' %}
+                                <span class="badge bg-secondary">❌ Suspendida</span>
+                            {% endif %}
+                        </h4>
+                        <p class="mb-0">
+                            <strong>Plan:</strong> {{ subscription.get_plan_display }}
+                        </p>
+                    </div>
+
+                    <!-- Días Restantes -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <div class="card text-center {% if subscription.days_remaining <= 7 %}bg-warning{% else %}bg-light{% endif %}">
+                                <div class="card-body">
+                                    <h2 class="mb-0">{{ subscription.days_remaining }}</h2>
+                                    <small>Días Restantes</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card text-center bg-light">
+                                <div class="card-body">
+                                    <h2 class="mb-0">${{ subscription.total_paid }}</h2>
+                                    <small>Total Pagado</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fechas -->
+                    <div class="mb-4">
+                        <h5>Fechas Importantes:</h5>
+                        <ul class="list-group">
+                            {% if subscription.status == 'trial' %}
+                                <li class="list-group-item">
+                                    <strong>Prueba iniciada:</strong> {{ subscription.trial_started|date:"d/m/Y H:i" }}
+                                </li>
+                                <li class="list-group-item">
+                                    <strong>Prueba vence:</strong> {{ subscription.trial_ends|date:"d/m/Y H:i" }}
+                                </li>
+                            {% else %}
+                                <li class="list-group-item">
+                                    <strong>Período actual inicia:</strong> {{ subscription.current_period_start|date:"d/m/Y H:i" }}
+                                </li>
+                                <li class="list-group-item">
+                                    <strong>Período actual vence:</strong> {{ subscription.current_period_end|date:"d/m/Y H:i" }}
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+
+                    <!-- Acciones -->
+                    <div class="d-flex gap-2 mb-4">
+                        {% if subscription.status in 'trial,expired' and not subscription.has_paid_initial %}
+                            <a href="{% url 'subscription_activate' %}" class="btn btn-success btn-lg">
+                                <i class="bi bi-rocket-takeoff"></i> Activar Ahora (3 meses - $45)
+                            </a>
+                        {% elif subscription.status == 'active' and subscription.days_remaining <= 7 %}
+                            <a href="{% url 'subscription_activate' %}" class="btn btn-warning btn-lg">
+                                <i class="bi bi-arrow-clockwise"></i> Renovar (1 mes - $15)
+                            </a>
+                        {% elif subscription.status == 'expired' %}
+                            <a href="{% url 'subscription_activate' %}" class="btn btn-danger btn-lg">
+                                <i class="bi bi-exclamation-triangle"></i> Renovar Suscripción
+                            </a>
+                        {% endif %}
+                        
+                        <a href="{% url 'subscription_payment' %}" class="btn btn-outline-info">
+                            <i class="bi bi-cash-stack"></i> Instrucciones de Pago
+                        </a>
+                    </div>
+
+                    <!-- Historial de Pagos -->
+                    <h5>Historial de Pagos:</h5>
+                    {% if payments %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Plan</th>
+                                        <th>Monto</th>
+                                        <th>Método</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for payment in payments %}
+                                    <tr>
+                                        <td>{{ payment.created_at|date:"d/m/Y H:i" }}</td>
+                                        <td>{{ payment.get_plan_type_display }}</td>
+                                        <td>${{ payment.amount }}</td>
+                                        <td>{{ payment.get_payment_method_display }}</td>
+                                        <td>
+                                            {% if payment.verified %}
+                                                <span class="badge bg-success">✓ Verificado</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">⏳ Pendiente</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No hay pagos registrados aún.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Información de Precios -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Planes y Precios</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card mb-3">
+                                <div class="card-header bg-info text-white text-center">
+                                    <h6>Prueba Gratuita</h6>
+                                </div>
+                                <div class="card-body text-center">
+                                    <h3>GRATIS</h3>
+                                    <p class="text-muted">30 días</p>
+                                    <ul class="list-unstyled small">
+                                        <li>✓ Todas las funciones</li>
+                                        <li>✓ Sin tarjeta de crédito</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card mb-3 border-success">
+                                <div class="card-header bg-success text-white text-center">
+                                    <h6>Activación Inicial</h6>
+                                </div>
+                                <div class="card-body text-center">
+                                    <h3>$45</h3>
+                                    <p class="text-muted">3 meses (obligatorio)</p>
+                                    <ul class="list-unstyled small">
+                                        <li>✓ Todas las funciones</li>
+                                        <li>✓ Soporte incluido</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card mb-3">
+                                <div class="card-header bg-primary text-white text-center">
+                                    <h6>Renovación Mensual</h6>
+                                </div>
+                                <div class="card-body text-center">
+                                    <h3>$15</h3>
+                                    <p class="text-muted">1 mes</p>
+                                    <ul class="list-unstyled small">
+                                        <li>✓ Renovación automática</li>
+                                        <li>✓ Sin compromiso</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <a href="{% url 'index' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Volver al Inicio
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

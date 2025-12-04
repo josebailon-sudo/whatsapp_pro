@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-3">
+  <div class="col">
+    <h2><i class="bi bi-tags"></i> Etiquetas</h2>
+    <p class="text-muted">Organiza tus contactos con etiquetas personalizadas</p>
+  </div>
+  <div class="col-auto">
+    <a href="/admin/whatsapp/tag/add/" class="btn btn-success">
+      <i class="bi bi-plus-circle"></i> Nueva Etiqueta
+    </a>
+  </div>
+</div>
+
+<div class="row">
+  {% for tag in tags %}
+  <div class="col-md-4 col-lg-3 mb-3">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2">
+          <span class="badge" style="background-color: {{ tag.color }}; font-size: 1rem;">
+            <i class="bi bi-tag-fill"></i>
+          </span>
+          <h5 class="ms-2 mb-0">{{ tag.name }}</h5>
+        </div>
+        {% if tag.description %}
+        <p class="text-muted small">{{ tag.description|truncatewords:10 }}</p>
+        {% endif %}
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="badge bg-primary">{{ tag.contact_count }} contactos</span>
+          <a href="{% url 'tag_detail' tag.id %}" class="btn btn-sm btn-outline-primary">Ver</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="col-12">
+    <div class="alert alert-info">
+      <i class="bi bi-info-circle"></i> No hay etiquetas. 
+      <a href="/admin/whatsapp/tag/add/" class="alert-link">Crea tu primera etiqueta</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

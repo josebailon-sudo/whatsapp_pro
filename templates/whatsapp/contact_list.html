@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}Contactos - WhatsApp Pro{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="bi bi-people"></i> Contactos</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="/admin/whatsapp/contact/add/" class="btn btn-primary">
+            <i class="bi bi-person-plus"></i> Añadir Contacto
+        </a>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-6">
+                <input type="text" name="search" class="form-control" placeholder="Buscar por nombre, teléfono o email..." value="{{ search }}">
+            </div>
+            <div class="col-md-3">
+                <select name="opt_in" class="form-select">
+                    <option value="">Todos los estados</option>
+                    <option value="true" {% if opt_in_filter == 'true' %}selected{% endif %}>Opt-in activo</option>
+                    <option value="false" {% if opt_in_filter == 'false' %}selected{% endif %}>Sin opt-in</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i> Filtrar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Contacts Table -->
+<div class="card">
+    <div class="card-body">
+        {% if contacts %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Teléfono</th>
+                            <th>Email</th>
+                            <th>Opt-in</th>
+                            <th>Tags</th>
+                            <th>Creado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for contact in contacts %}
+                            <tr>
+                                <td><strong>{{ contact.name }}</strong></td>
+                                <td><i class="bi bi-phone"></i> {{ contact.phone_number }}</td>
+                                <td>
+                                    {% if contact.email %}
+                                        <i class="bi bi-envelope"></i> {{ contact.email }}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if contact.opt_in %}
+                                        <span class="badge bg-success"><i class="bi bi-check-circle"></i> Sí</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary"><i class="bi bi-x-circle"></i> No</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if contact.tags %}
+                                        <small class="text-muted">{{ contact.tags }}</small>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td><small class="text-muted">{{ contact.created_at|date:"d/m/Y" }}</small></td>
+                                <td>
+                                    <a href="/admin/whatsapp/contact/{{ contact.pk }}/change/" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-3">
+                <p class="text-muted">Total: {{ contacts.count }} contacto(s)</p>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-people" style="font-size: 4rem; color: #ccc;"></i>
+                <p class="text-muted mt-3">No se encontraron contactos.</p>
+                <a href="/admin/whatsapp/contact/add/" class="btn btn-primary">
+                    <i class="bi bi-person-plus"></i> Añadir Primer Contacto
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

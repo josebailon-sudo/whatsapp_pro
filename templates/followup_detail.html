@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-3">
+  <div class="col">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'followups_list' %}">Seguimientos</a></li>
+        <li class="breadcrumb-item active">{{ followup.contact.name }}</li>
+      </ol>
+    </nav>
+    <h2><i class="bi bi-calendar-check"></i> Seguimiento - {{ followup.contact.name }}</h2>
+  </div>
+  <div class="col-auto">
+    {% if followup.status == 'pendiente' %}
+    <form method="post" class="d-inline">
+      {% csrf_token %}
+      <button type="submit" name="complete" class="btn btn-success">
+        <i class="bi bi-check-circle"></i> Marcar Completado
+      </button>
+    </form>
+    {% endif %}
+    <a href="/admin/whatsapp/followup/{{ followup.id }}/change/" class="btn btn-primary">
+      <i class="bi bi-pencil"></i> Editar
+    </a>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6">
+    <div class="card mb-3">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-person"></i> Contacto</h5>
+      </div>
+      <div class="card-body">
+        <h4>{{ followup.contact.name }}</h4>
+        <p class="mb-1"><i class="bi bi-telephone"></i> {{ followup.contact.phone }}</p>
+        <p class="mb-0"><i class="bi bi-tag"></i> {{ followup.contact.group }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card mb-3">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-info-circle"></i> Detalles</h5>
+      </div>
+      <div class="card-body">
+        <table class="table table-sm mb-0">
+          <tr>
+            <th>Tipo:</th>
+            <td><span class="badge bg-secondary">{{ followup.get_type_display }}</span></td>
+          </tr>
+          <tr>
+            <th>Estado:</th>
+            <td>
+              {% if followup.status == 'pendiente' %}
+              <span class="badge bg-warning">Pendiente</span>
+              {% elif followup.status == 'completado' %}
+              <span class="badge bg-success">Completado</span>
+              {% else %}
+              <span class="badge bg-secondary">{{ followup.get_status_display }}</span>
+              {% endif %}
+            </td>
+          </tr>
+          <tr>
+            <th>Programado:</th>
+            <td>{{ followup.scheduled_for|date:"d/m/Y H:i" }}</td>
+          </tr>
+          {% if followup.completed_at %}
+          <tr>
+            <th>Completado:</th>
+            <td>{{ followup.completed_at|date:"d/m/Y H:i" }}</td>
+          </tr>
+          {% endif %}
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-header">
+    <h5 class="mb-0"><i class="bi bi-text-left"></i> Descripción</h5>
+  </div>
+  <div class="card-body">
+    <p>{{ followup.description }}</p>
+  </div>
+</div>
+
+{% if followup.notes %}
+<div class="card">
+  <div class="card-header">
+    <h5 class="mb-0"><i class="bi bi-sticky"></i> Notas</h5>
+  </div>
+  <div class="card-body">
+    <p class="mb-0">{{ followup.notes }}</p>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

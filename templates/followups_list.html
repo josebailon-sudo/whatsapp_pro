@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-3">
+  <div class="col">
+    <h2><i class="bi bi-calendar-check"></i> Seguimientos y Recordatorios</h2>
+    <p class="text-muted">Gestiona tareas y seguimientos de contactos</p>
+  </div>
+  <div class="col-auto">
+    <a href="/admin/whatsapp/followup/add/" class="btn btn-success">
+      <i class="bi bi-plus-circle"></i> Nuevo Seguimiento
+    </a>
+  </div>
+</div>
+
+<div class="row mb-3">
+  <div class="col-md-3">
+    <div class="card border-warning">
+      <div class="card-body text-center">
+        <h3>{{ stats.pendiente }}</h3>
+        <p class="mb-0">Pendientes</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card border-danger">
+      <div class="card-body text-center">
+        <h3>{{ stats.vencidos }}</h3>
+        <p class="mb-0">Vencidos</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card border-success">
+      <div class="card-body text-center">
+        <h3>{{ stats.completado }}</h3>
+        <p class="mb-0">Completados</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="btn-group-vertical w-100">
+      <a href="{% url 'followups_list' %}" class="btn btn-{% if not current_filter %}primary{% else %}outline-primary{% endif %}">Todos</a>
+      <a href="{% url 'followups_list' %}?status=pendiente" class="btn btn-{% if current_filter == 'pendiente' %}warning{% else %}outline-warning{% endif %}">Pendientes</a>
+      <a href="{% url 'followups_list' %}?status=completado" class="btn btn-{% if current_filter == 'completado' %}success{% else %}outline-success{% endif %}">Completados</a>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    {% if followups %}
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Contacto</th>
+            <th>Tipo</th>
+            <th>Descripción</th>
+            <th>Fecha Programada</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for followup in followups %}
+          <tr class="{% if followup.is_overdue %}table-danger{% endif %}">
+            <td>
+              <strong>{{ followup.contact.name }}</strong>
+              <br><small class="text-muted">{{ followup.contact.phone }}</small>
+            </td>
+            <td><span class="badge bg-secondary">{{ followup.get_type_display }}</span></td>
+            <td>{{ followup.description|truncatewords:10 }}</td>
+            <td>
+              {{ followup.scheduled_for|date:"d/m/Y H:i" }}
+              {% if followup.is_overdue %}
+              <br><span class="badge bg-danger">Vencido</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if followup.status == 'pendiente' %}
+              <span class="badge bg-warning">Pendiente</span>
+              {% elif followup.status == 'completado' %}
+              <span class="badge bg-success">Completado</span>
+              {% else %}
+              <span class="badge bg-secondary">{{ followup.get_status_display }}</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{% url 'followup_detail' followup.id %}" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-eye"></i> Ver
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+      <i class="bi bi-info-circle"></i> No hay seguimientos.
+      <a href="/admin/whatsapp/followup/add/" class="alert-link">Crea tu primer seguimiento</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

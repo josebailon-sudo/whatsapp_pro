@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Instrucciones de Pago{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow-lg mb-4">
+                <div class="card-header bg-info text-white">
+                    <h3 class="mb-0">
+                        <i class="bi bi-cash-stack"></i> Instrucciones de Pago
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <!-- Resumen del Plan -->
+                    <div class="alert alert-primary">
+                        <h4>Plan a Pagar: {{ plan|upper }}</h4>
+                        <h2 class="mb-0">${{ amount }} USD</h2>
+                        <p class="mb-0"><small>Duración: {{ duration }}</small></p>
+                    </div>
+
+                    <!-- Métodos de Pago -->
+                    <h5 class="mb-3">Métodos de Pago Disponibles:</h5>
+
+                    <!-- Transferencia Bancaria -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">
+                                <i class="bi bi-bank"></i> Transferencia Bancaria
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Banco:</strong> [TU BANCO]</p>
+                            <p><strong>Titular:</strong> [TU NOMBRE]</p>
+                            <p><strong>Cuenta Corriente:</strong> [NÚMERO DE CUENTA]</p>
+                            <p><strong>RUC/CI:</strong> [TU RUC/CÉDULA]</p>
+                            <p class="mb-0"><strong>Concepto:</strong> Suscripción WhatsApp Pro - {{ request.user.username }}</p>
+                            
+                            <div class="alert alert-warning mt-3 mb-0">
+                                <small>
+                                    <i class="bi bi-info-circle"></i> 
+                                    Después de realizar la transferencia, guarda el comprobante y 
+                                    registra el número de transacción en el formulario de activación.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PayPal -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">
+                                <i class="bi bi-paypal"></i> PayPal
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Email PayPal:</strong> [TU_EMAIL_PAYPAL@example.com]</p>
+                            <p class="mb-0"><strong>Monto:</strong> ${{ amount }} USD</p>
+                            
+                            <div class="alert alert-info mt-3 mb-0">
+                                <small>
+                                    <i class="bi bi-info-circle"></i> 
+                                    Envía el pago como "Enviar dinero a amigos y familia" para evitar comisiones.
+                                    Incluye tu nombre de usuario ({{ request.user.username }}) en la nota.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tarjeta de Crédito (Stripe) -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">
+                                <i class="bi bi-credit-card"></i> Tarjeta de Crédito/Débito
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <p>Próximamente disponible pago automático con tarjeta.</p>
+                            <p class="text-muted mb-0">Por ahora, usa transferencia bancaria o PayPal.</p>
+                        </div>
+                    </div>
+
+                    <!-- Efectivo -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">
+                                <i class="bi bi-cash-coin"></i> Efectivo
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <p>Si estás en [TU CIUDAD], puedes realizar el pago en efectivo.</p>
+                            <p class="mb-0">
+                                <strong>Contacto:</strong> [TU WHATSAPP/TELÉFONO] para coordinar lugar y horario.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Pasos después del pago -->
+                    <div class="card bg-success text-white mt-4">
+                        <div class="card-body">
+                            <h5>✅ Después de Realizar el Pago:</h5>
+                            <ol class="mb-0">
+                                <li>Ve a la <a href="{% url 'subscription_activate' %}" class="text-white"><u>página de activación</u></a></li>
+                                <li>Selecciona el método de pago que usaste</li>
+                                <li>Ingresa el ID de transacción (si aplica)</li>
+                                <li>Haz clic en "Activar" para registrar tu pago</li>
+                                <li>Espera la verificación (máximo 24 horas)</li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <!-- Soporte -->
+                    <div class="alert alert-info mt-4">
+                        <h6>¿Necesitas ayuda?</h6>
+                        <p class="mb-0">
+                            <i class="bi bi-envelope"></i> Email: [TU_EMAIL_SOPORTE@example.com]<br>
+                            <i class="bi bi-whatsapp"></i> WhatsApp: [TU_NUMERO_WHATSAPP]<br>
+                            <i class="bi bi-clock"></i> Horario: Lunes a Viernes, 9:00 - 18:00
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mb-4">
+                <a href="{% url 'subscription_activate' %}" class="btn btn-success btn-lg">
+                    <i class="bi bi-arrow-right"></i> Ir a Activar Suscripción
+                </a>
+                <a href="{% url 'subscription_status' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Ver Estado
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

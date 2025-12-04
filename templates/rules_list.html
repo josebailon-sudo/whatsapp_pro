@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-3">
+  <div class="col">
+    <h2><i class="bi bi-robot"></i> Reglas de Respuesta Automática</h2>
+    <p class="text-muted">Configura respuestas automáticas basadas en condiciones</p>
+  </div>
+  <div class="col-auto">
+    <a href="/admin/whatsapp/rule/add/" class="btn btn-success">
+      <i class="bi bi-plus-circle"></i> Nueva Regla
+    </a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    {% if rules %}
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Prioridad</th>
+            <th>Nombre</th>
+            <th>Horario</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for rule in rules %}
+          <tr>
+            <td><span class="badge bg-dark">{{ rule.priority }}</span></td>
+            <td>
+              <strong>{{ rule.name }}</strong>
+              <br><small class="text-muted">{{ rule.conditions|length }} condición(es)</small>
+            </td>
+            <td>
+              <i class="bi bi-clock"></i> {{ rule.schedule_start|time:"H:i" }} - {{ rule.schedule_end|time:"H:i" }}
+            </td>
+            <td>
+              {% if rule.active %}
+              <span class="badge bg-success">Activa</span>
+              {% else %}
+              <span class="badge bg-secondary">Inactiva</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{% url 'rule_detail' rule.id %}" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-eye"></i> Ver
+              </a>
+              <a href="/admin/whatsapp/rule/{{ rule.id }}/change/" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-pencil"></i>
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+      <i class="bi bi-info-circle"></i> No hay reglas configuradas.
+      <a href="/admin/whatsapp/rule/add/" class="alert-link">Crea tu primera regla</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

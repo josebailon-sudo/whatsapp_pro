@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-3">
+  <div class="col">
+    <h2><i class="bi bi-paperclip"></i> Archivos Adjuntos</h2>
+    <p class="text-muted">Gestiona imágenes, documentos y archivos multimedia</p>
+  </div>
+  <div class="col-auto">
+    <a href="/admin/whatsapp/attachment/add/" class="btn btn-success">
+      <i class="bi bi-upload"></i> Subir Archivo
+    </a>
+  </div>
+</div>
+
+<div class="row mb-3">
+  <div class="col-md-2">
+    <div class="card">
+      <div class="card-body text-center">
+        <h4>{{ stats.total }}</h4>
+        <p class="mb-0 small">Total</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="card">
+      <div class="card-body text-center">
+        <h4>{{ stats.images }}</h4>
+        <p class="mb-0 small">Imágenes</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="card">
+      <div class="card-body text-center">
+        <h4>{{ stats.documents }}</h4>
+        <p class="mb-0 small">Documentos</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="btn-group w-100">
+      <a href="{% url 'attachments_list' %}" class="btn btn-{% if not current_filter %}primary{% else %}outline-primary{% endif %}">Todos</a>
+      <a href="{% url 'attachments_list' %}?type=image" class="btn btn-{% if current_filter == 'image' %}info{% else %}outline-info{% endif %}">Imágenes</a>
+      <a href="{% url 'attachments_list' %}?type=document" class="btn btn-{% if current_filter == 'document' %}secondary{% else %}outline-secondary{% endif %}">Documentos</a>
+      <a href="{% url 'attachments_list' %}?type=audio" class="btn btn-{% if current_filter == 'audio' %}warning{% else %}outline-warning{% endif %}">Audio</a>
+      <a href="{% url 'attachments_list' %}?type=video" class="btn btn-{% if current_filter == 'video' %}danger{% else %}outline-danger{% endif %}">Video</a>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  {% for attachment in attachments %}
+  <div class="col-md-4 col-lg-3 mb-3">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="text-center mb-2">
+          {% if attachment.type == 'image' %}
+          <i class="bi bi-file-image fs-1 text-info"></i>
+          {% elif attachment.type == 'document' %}
+          <i class="bi bi-file-earmark-text fs-1 text-secondary"></i>
+          {% elif attachment.type == 'audio' %}
+          <i class="bi bi-file-music fs-1 text-warning"></i>
+          {% elif attachment.type == 'video' %}
+          <i class="bi bi-file-play fs-1 text-danger"></i>
+          {% endif %}
+        </div>
+        <h6 class="card-title">{{ attachment.original_name|truncatechars:30 }}</h6>
+        <p class="card-text small text-muted">
+          <i class="bi bi-hdd"></i> {{ attachment.size|filesizeformat }}
+          <br><i class="bi bi-calendar"></i> {{ attachment.uploaded_at|date:"d/m/Y" }}
+        </p>
+        {% if attachment.tags.all %}
+        <div class="mb-2">
+          {% for tag in attachment.tags.all %}
+          <span class="badge" style="background-color: {{ tag.color }};">{{ tag.name }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+        <a href="/admin/whatsapp/attachment/{{ attachment.id }}/change/" class="btn btn-sm btn-outline-primary w-100">
+          <i class="bi bi-pencil"></i> Editar
+        </a>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="col-12">
+    <div class="alert alert-info">
+      <i class="bi bi-info-circle"></i> No hay archivos adjuntos.
+      <a href="/admin/whatsapp/attachment/add/" class="alert-link">Sube tu primer archivo</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

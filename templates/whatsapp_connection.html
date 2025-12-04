@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Conexión WhatsApp{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-success text-white">
+                    <h3 class="mb-0"><i class="bi bi-whatsapp"></i> Conexión WhatsApp Web</h3>
+                </div>
+                <div class="card-body">
+                    <!-- Estado de conexión -->
+                    <div id="status-container" class="alert alert-info">
+                        <div class="d-flex align-items-center">
+                            <div class="spinner-border spinner-border-sm me-2" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                            <span>Verificando conexión...</span>
+                        </div>
+                    </div>
+
+                    <!-- QR Code Container -->
+                    <div id="qr-container" class="text-center py-4" style="display: none;">
+                        <h5 class="mb-3">Escanea este código QR con WhatsApp</h5>
+                        <div class="alert alert-warning">
+                            <i class="bi bi-info-circle-fill"></i> 
+                            <strong>Pasos:</strong>
+                            <ol class="text-start mt-2 mb-0">
+                                <li>Abre WhatsApp en tu teléfono</li>
+                                <li>Ve a <strong>Configuración</strong> → <strong>Dispositivos vinculados</strong></li>
+                                <li>Toca <strong>Vincular un dispositivo</strong></li>
+                                <li>Escanea este código QR</li>
+                            </ol>
+                        </div>
+                        <div id="qr-image" class="p-4 bg-white border rounded d-inline-block">
+                            <!-- QR se renderiza aquí -->
+                        </div>
+                        <p class="text-muted mt-3">El código se actualiza automáticamente cada 30 segundos</p>
+                    </div>
+
+                    <!-- Conectado -->
+                    <div id="connected-container" class="text-center py-4" style="display: none;">
+                        <div class="alert alert-success">
+                            <i class="bi bi-check-circle-fill fs-1 d-block mb-3"></i>
+                            <h4>¡WhatsApp Conectado!</h4>
+                            <p class="mb-0">Número: <strong id="connected-number"></strong></p>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <button class="btn btn-outline-danger" onclick="logout()">
+                                <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Error de servicio -->
+                    <div id="error-container" class="text-center py-4" style="display: none;">
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle-fill fs-1 d-block mb-3"></i>
+                            <h4>Servicio WhatsApp no disponible</h4>
+                            <p>El servicio Node.js no está corriendo.</p>
+                            <code class="d-block mt-3 p-3 bg-dark text-white rounded">
+                                cd whatsapp_service<br>
+                                npm install<br>
+                                npm start
+                            </code>
+                        </div>
+                    </div>
+
+                    <!-- Instrucciones -->
+                    <div class="mt-4">
+                        <h5><i class="bi bi-info-circle"></i> Configuración</h5>
+                        <div class="accordion" id="instructionsAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#install">
+                                        1. Instalar servicio Node.js
+                                    </button>
+                                </h2>
+                                <div id="install" class="accordion-collapse collapse" data-bs-parent="#instructionsAccordion">
+                                    <div class="accordion-body">
+                                        <pre class="bg-dark text-white p-3 rounded"><code>cd whatsapp_service
+npm install
+npm start</code></pre>
+                                        <small class="text-muted">Esto instalará whatsapp-web.js y sus dependencias.</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#activate">
+                                        2. Activar modo real
+                                    </button>
+                                </h2>
+                                <div id="activate" class="accordion-collapse collapse" data-bs-parent="#instructionsAccordion">
+                                    <div class="accordion-body">
+                                        <p>Edita el archivo <code>.env</code> y cambia:</p>
+                                        <pre class="bg-dark text-white p-3 rounded"><code>USE_REAL_WHATSAPP=true</code></pre>
+                                        <small class="text-muted">Luego reinicia el servidor Django.</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#warnings">
+                                        ⚠️ Advertencias importantes
+                                    </button>
+                                </h2>
+                                <div id="warnings" class="accordion-collapse collapse" data-bs-parent="#instructionsAccordion">
+                                    <div class="accordion-body">
+                                        <ul class="text-danger">
+                                            <li><strong>No es oficial:</strong> whatsapp-web.js no es una API oficial de WhatsApp</li>
+                                            <li><strong>Riesgo de bloqueo:</strong> Usar tu WhatsApp personal puede resultar en suspensión</li>
+                                            <li><strong>Sesión activa:</strong> Debes mantener el servicio Node.js corriendo 24/7</li>
+                                            <li><strong>Recomendación:</strong> Usar solo para pruebas, no para producción</li>
+                                            <li><strong>Alternativa oficial:</strong> WhatsApp Business API para uso comercial</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let statusInterval;
+
+function checkStatus() {
+    fetch('/whatsapp/status/')
+        .then(response => response.json())
+        .then(data => {
+            const statusContainer = document.getElementById('status-container');
+            const qrContainer = document.getElementById('qr-container');
+            const connectedContainer = document.getElementById('connected-container');
+            const errorContainer = document.getElementById('error-container');
+            
+            // Ocultar todos
+            statusContainer.style.display = 'none';
+            qrContainer.style.display = 'none';
+            connectedContainer.style.display = 'none';
+            errorContainer.style.display = 'none';
+            
+            if (!data.connected) {
+                // Servicio no disponible
+                errorContainer.style.display = 'block';
+                if (statusInterval) clearInterval(statusInterval);
+                return;
+            }
+            
+            if (data.status === 'ready') {
+                // Conectado
+                connectedContainer.style.display = 'block';
+                if (data.info && data.info.phone) {
+                    document.getElementById('connected-number').textContent = '+' + data.info.phone;
+                }
+            } else if (data.qr) {
+                // Mostrar QR
+                qrContainer.style.display = 'block';
+                renderQR(data.qr);
+            } else {
+                // Inicializando
+                statusContainer.style.display = 'block';
+                statusContainer.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                        <span>Inicializando WhatsApp Web... (${data.status})</span>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('error-container').style.display = 'block';
+        });
+}
+
+function renderQR(qrText) {
+    const qrImage = document.getElementById('qr-image');
+    qrImage.innerHTML = '';
+    
+    // Usar QRCode.js o imagen SVG
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrText)}`;
+    qrImage.innerHTML = `<img src="${qrUrl}" alt="QR Code" class="img-fluid" style="max-width: 300px;">`;
+}
+
+function logout() {
+    if (!confirm('¿Cerrar sesión de WhatsApp?')) return;
+    
+    fetch('/whatsapp/logout/', { method: 'POST', headers: { 'X-CSRFToken': getCookie('csrftoken') } })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Iniciar verificación
+checkStatus();
+statusInterval = setInterval(checkStatus, 5000); // Cada 5 segundos
+</script>
+{% endblock %}

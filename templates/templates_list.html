@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="bi bi-file-text"></i> Plantillas de Mensajes</h2>
+                <a href="{% url 'template_create' %}" class="btn btn-success btn-lg">
+                    <i class="bi bi-plus-circle"></i> Nueva Plantilla
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        {% for t in templates %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header {% if t.active %}bg-success{% else %}bg-secondary{% endif %} text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">{{ t.name }}</h5>
+                        {% if t.active %}
+                        <span class="badge bg-light text-success"><i class="bi bi-check-circle"></i></span>
+                        {% else %}
+                        <span class="badge bg-light text-secondary"><i class="bi bi-pause-circle"></i></span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-2">
+                        <i class="bi bi-tag"></i> <strong>Categoría:</strong> {{ t.category }}
+                    </p>
+                    <p class="text-muted mb-2">
+                        <i class="bi bi-calendar"></i> <strong>Creada:</strong> {{ t.created_at|date:"d/m/Y H:i" }}
+                    </p>
+                    
+                    <div class="bg-light p-3 rounded mb-3" style="max-height: 150px; overflow-y: auto;">
+                        <pre style="white-space: pre-wrap; margin: 0; font-size: 0.85rem;">{{ t.content|truncatewords:30 }}</pre>
+                    </div>
+                    
+                    {% if t.variables_used %}
+                    <div class="mb-2">
+                        <small class="text-muted"><i class="bi bi-code"></i> Variables:</small><br>
+                        {% for var in t.variables_used %}
+                        <span class="badge bg-info text-dark me-1">{{'{'}}{{ var }}{{'}'}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-white">
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'template_edit' t.pk %}" class="btn btn-sm btn-primary">
+                            <i class="bi bi-pencil"></i> Editar
+                        </a>
+                        <a href="{% url 'template_delete' t.pk %}" class="btn btn-sm btn-danger">
+                            <i class="bi bi-trash"></i> Eliminar
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i> No hay plantillas creadas. 
+                <a href="{% url 'template_create' %}" class="alert-link">Crea tu primera plantilla</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
