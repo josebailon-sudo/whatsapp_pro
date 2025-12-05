@@ -4,7 +4,8 @@ gunicorn
 Django==4.2
 djangorestframework==3.14.0
 python-dotenv==1.0.0
-pandas==2.0.3
+numpy>=1.24.0,<2.0.0
+pandas>=2.0.0,<3.0.0
 openpyxl==3.1.2
 requests==2.31.0
 # Optional for local Selenium tests (not required for MVP)
@@ -14,3 +15,6 @@ webdriver-manager==3.8.5
 # PostgreSQL dependencies for Render
 dj-database-url
 psycopg2-binary
+
+
+
