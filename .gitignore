@@ -1,3 +1,5 @@
+
+whatsapp_service/whatsapp_session/
 *.pyc
 __pycache__/
 *.py[cod]
