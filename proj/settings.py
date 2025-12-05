@@ -49,6 +49,7 @@ DATABASES = {
 }
 
 # Configuración para PostgreSQL en Render
+import os
 import dj_database_url
 DATABASES = {
     'default': dj_database_url.config(default=os.environ.get('DATABASE_URL'))
@@ -78,3 +79,4 @@ REST_FRAMEWORK = {
         'rest_framework.filters.OrderingFilter',
     ],
 }
+
