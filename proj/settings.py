@@ -48,6 +48,11 @@ DATABASES = {
     }
 }
 
+# Configuración para PostgreSQL en Render
+import dj_database_url
+DATABASES = {
+    'default': dj_database_url.config(default=os.environ.get('DATABASE_URL'))
+}
 AUTH_PASSWORD_VALIDATORS = []
 LANGUAGE_CODE = 'es-ES'
 TIME_ZONE = 'UTC'
